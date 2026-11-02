@@ -10,6 +10,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "nuxt preview",
+    "test": "vitest run",
     "typecheck": "nuxt typecheck",
     "postinstall": "nuxt prepare"
   },
@@ -22,6 +23,7 @@
     "@nuxt/eslint": "^1.17.0",
     "prettier": "^3.9.10",
     "typescript": "^6.0.3",
+    "vitest": "^4.1.12",
     "vue-tsc": "^3.3.14"
   },
   "overrides": {

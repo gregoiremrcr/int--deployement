@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Pokemon, PokemonApiResponse } from '~~/types/pokemon'
 import type { WishlistItem } from '~~/types/wishlist-item'
+import { addPokemon } from '~~/utils/wishlist'
 
 const STORAGE_KEY = 'pokemon-wishlist'
 const search = ref('')
@@ -51,9 +52,20 @@ const saveWishlist = (): void =>
 
 const toggleWishlist = (pokemon: Pokemon): void => {
   const index = wishlist.value.findIndex((item) => item.id === pokemon.id)
-  if (index === -1) {
-    wishlist.value.push({ ...pokemon, addedAt: new Date().toISOString() })
-  } else wishlist.value.splice(index, 1)
+
+  if (index !== -1) {
+    wishlist.value.splice(index, 1)
+    saveWishlist()
+    return
+  }
+
+  const addition = addPokemon(wishlist.value, pokemon)
+  if (addition.status === 'full') {
+    errorMessage.value = 'La wishlist est limitée à 6 Pokémon.'
+    return
+  }
+
+  wishlist.value = addition.wishlist
   saveWishlist()
 }
 
