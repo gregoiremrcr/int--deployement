@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import type { Pokemon, PokemonApiResponse } from '~~/types/pokemon'
+import type { Pokemon } from '~~/types/pokemon'
 import type { WishlistItem } from '~~/types/wishlist-item'
+import { fetchPokemon } from '~~/utils/pokeapi'
 import { addPokemon } from '~~/utils/wishlist'
 
 const STORAGE_KEY = 'pokemon-wishlist'
@@ -30,15 +31,7 @@ const searchPokemon = async (): Promise<void> => {
   errorMessage.value = ''
   result.value = null
   try {
-    const data = await $fetch<PokemonApiResponse>(
-      `https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(query)}`,
-    )
-    result.value = {
-      id: data.id,
-      name: data.name,
-      image: data.sprites.front_default ?? '',
-      types: data.types.map(({ type }) => type.name),
-    }
+    result.value = await fetchPokemon(query)
   } catch {
     errorMessage.value =
       'Pokémon introuvable. Vérifiez le nom ou le numéro saisi.'
