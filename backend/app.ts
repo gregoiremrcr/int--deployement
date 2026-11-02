@@ -1,9 +1,12 @@
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 import type { WishlistItem } from '../types/wishlist-item'
 
 export const createWishlistApp = (): Hono => {
   const wishlist: WishlistItem[] = []
   const app = new Hono()
+
+  app.use('*', cors({ origin: '*' }))
 
   app.get('/health', (context) => context.json({ status: 'ok' }))
 

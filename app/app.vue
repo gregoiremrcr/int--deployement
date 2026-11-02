@@ -2,16 +2,20 @@
 import type { Pokemon } from '~~/types/pokemon'
 import type { WishlistItem } from '~~/types/wishlist-item'
 import { fetchPokemon } from '~~/utils/pokeapi'
-import { addPokemon } from '~~/utils/wishlist'
 import {
-  loadWishlist,
-  saveWishlist as persistWishlist,
-} from '~~/utils/wishlist-storage'
+  createWishlistItem,
+  deleteWishlistItem,
+  getWishlist,
+} from '~~/utils/wishlist-api'
+import { addPokemon } from '~~/utils/wishlist'
 
+const config = useRuntimeConfig()
+const apiBaseUrl = String(config.public.apiBaseUrl)
 const search = ref('')
 const result = ref<Pokemon | null>(null)
 const wishlist = ref<WishlistItem[]>([])
 const isLoading = ref(false)
+const isSaving = ref(false)
 const errorMessage = ref('')
 const hasLoadedWishlist = ref(false)
 
@@ -43,35 +47,45 @@ const searchPokemon = async (): Promise<void> => {
   }
 }
 
-const saveWishlist = (): void => persistWishlist(wishlist.value, localStorage)
-
-const toggleWishlist = (pokemon: Pokemon): void => {
+const toggleWishlist = async (pokemon: Pokemon): Promise<void> => {
   const index = wishlist.value.findIndex((item) => item.id === pokemon.id)
+  isSaving.value = true
+  errorMessage.value = ''
 
-  if (index !== -1) {
-    wishlist.value.splice(index, 1)
-    saveWishlist()
-    return
+  try {
+    if (index !== -1) {
+      await deleteWishlistItem(apiBaseUrl, pokemon.id)
+      wishlist.value.splice(index, 1)
+      return
+    }
+
+    const addition = addPokemon(wishlist.value, pokemon)
+    if (addition.status === 'full') {
+      errorMessage.value = 'La wishlist est limitée à 6 Pokémon.'
+      return
+    }
+
+    const savedPokemon = await createWishlistItem(apiBaseUrl, pokemon)
+    wishlist.value = [...wishlist.value, savedPokemon]
+  } catch {
+    errorMessage.value = 'Impossible de contacter l’API Hono.'
+  } finally {
+    isSaving.value = false
   }
-
-  const addition = addPokemon(wishlist.value, pokemon)
-  if (addition.status === 'full') {
-    errorMessage.value = 'La wishlist est limitée à 6 Pokémon.'
-    return
-  }
-
-  wishlist.value = addition.wishlist
-  saveWishlist()
 }
 
-const removeFromWishlist = (pokemon: WishlistItem): void => {
-  wishlist.value = wishlist.value.filter((item) => item.id !== pokemon.id)
-  saveWishlist()
+const removeFromWishlist = async (pokemon: WishlistItem): Promise<void> => {
+  await toggleWishlist(pokemon)
 }
 
-onMounted((): void => {
-  wishlist.value = loadWishlist(localStorage)
-  hasLoadedWishlist.value = true
+onMounted(async (): Promise<void> => {
+  try {
+    wishlist.value = await getWishlist(apiBaseUrl)
+  } catch {
+    errorMessage.value = 'Impossible de charger la wishlist depuis l’API Hono.'
+  } finally {
+    hasLoadedWishlist.value = true
+  }
 })
 </script>
 
@@ -124,7 +138,13 @@ onMounted((): void => {
         type="button"
         @click="toggleWishlist(result)"
       >
-        {{ isInWishlist ? 'Retirer de la wishlist' : 'Ajouter à la wishlist' }}
+        {{
+          isSaving
+            ? 'Synchronisation…'
+            : isInWishlist
+              ? 'Retirer de la wishlist'
+              : 'Ajouter à la wishlist'
+        }}
       </button>
     </section>
 
@@ -136,7 +156,9 @@ onMounted((): void => {
             Wishlist <span>({{ wishlist.length }})</span>
           </h2>
         </div>
-        <p v-if="wishlist.length" class="saved-label">Sauvegardée localement</p>
+        <p v-if="wishlist.length" class="saved-label">
+          Synchronisée avec l’API
+        </p>
       </div>
       <div v-if="wishlist.length" class="wishlist-grid">
         <article
