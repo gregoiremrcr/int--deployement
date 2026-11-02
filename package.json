@@ -10,6 +10,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "nuxt preview",
+    "typecheck": "nuxt typecheck",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
@@ -19,7 +20,9 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
-    "prettier": "^3.9.10"
+    "prettier": "^3.9.10",
+    "typescript": "^6.0.3",
+    "vue-tsc": "^3.3.14"
   },
   "overrides": {
     "crossws": "0.4.17"

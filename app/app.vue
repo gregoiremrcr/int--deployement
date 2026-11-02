@@ -1,20 +1,16 @@
 <script setup lang="ts">
-interface Pokemon {
-  id: number
-  name: string
-  image: string
-  types: string[]
-}
+import type { Pokemon, PokemonApiResponse } from '~~/types/pokemon'
+import type { WishlistItem } from '~~/types/wishlist-item'
 
 const STORAGE_KEY = 'pokemon-wishlist'
 const search = ref('')
 const result = ref<Pokemon | null>(null)
-const wishlist = ref<Pokemon[]>([])
+const wishlist = ref<WishlistItem[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 const hasLoadedWishlist = ref(false)
 
-const formatName = (name: string) =>
+const formatName = (name: string): string =>
   name.charAt(0).toUpperCase() + name.slice(1)
 const isInWishlist = computed(() =>
   result.value
@@ -22,7 +18,7 @@ const isInWishlist = computed(() =>
     : false,
 )
 
-const searchPokemon = async () => {
+const searchPokemon = async (): Promise<void> => {
   const query = search.value.trim().toLowerCase()
   if (!query) {
     errorMessage.value = 'Saisissez un nom ou un numéro de Pokémon.'
@@ -33,12 +29,9 @@ const searchPokemon = async () => {
   errorMessage.value = ''
   result.value = null
   try {
-    const data = await $fetch<{
-      id: number
-      name: string
-      sprites: { front_default: string | null }
-      types: Array<{ type: { name: string } }>
-    }>(`https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(query)}`)
+    const data = await $fetch<PokemonApiResponse>(
+      `https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(query)}`,
+    )
     result.value = {
       id: data.id,
       name: data.name,
@@ -53,25 +46,28 @@ const searchPokemon = async () => {
   }
 }
 
-const saveWishlist = () =>
+const saveWishlist = (): void =>
   localStorage.setItem(STORAGE_KEY, JSON.stringify(wishlist.value))
 
-const toggleWishlist = (pokemon: Pokemon) => {
+const toggleWishlist = (pokemon: Pokemon): void => {
   const index = wishlist.value.findIndex((item) => item.id === pokemon.id)
-  if (index === -1) wishlist.value.push(pokemon)
-  else wishlist.value.splice(index, 1)
+  if (index === -1) {
+    wishlist.value.push({ ...pokemon, addedAt: new Date().toISOString() })
+  } else wishlist.value.splice(index, 1)
   saveWishlist()
 }
 
-const removeFromWishlist = (pokemon: Pokemon) => {
+const removeFromWishlist = (pokemon: WishlistItem): void => {
   wishlist.value = wishlist.value.filter((item) => item.id !== pokemon.id)
   saveWishlist()
 }
 
-onMounted(() => {
+onMounted((): void => {
   try {
     const savedWishlist = localStorage.getItem(STORAGE_KEY)
-    wishlist.value = savedWishlist ? JSON.parse(savedWishlist) : []
+    wishlist.value = savedWishlist
+      ? (JSON.parse(savedWishlist) as WishlistItem[])
+      : []
   } catch {
     wishlist.value = []
   } finally {
