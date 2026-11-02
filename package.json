@@ -20,5 +20,8 @@
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
     "prettier": "^3.9.10"
+  },
+  "overrides": {
+    "crossws": "0.4.17"
   }
 }
