@@ -3,8 +3,11 @@ import type { Pokemon } from '~~/types/pokemon'
 import type { WishlistItem } from '~~/types/wishlist-item'
 import { fetchPokemon } from '~~/utils/pokeapi'
 import { addPokemon } from '~~/utils/wishlist'
+import {
+  loadWishlist,
+  saveWishlist as persistWishlist,
+} from '~~/utils/wishlist-storage'
 
-const STORAGE_KEY = 'pokemon-wishlist'
 const search = ref('')
 const result = ref<Pokemon | null>(null)
 const wishlist = ref<WishlistItem[]>([])
@@ -40,8 +43,7 @@ const searchPokemon = async (): Promise<void> => {
   }
 }
 
-const saveWishlist = (): void =>
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(wishlist.value))
+const saveWishlist = (): void => persistWishlist(wishlist.value, localStorage)
 
 const toggleWishlist = (pokemon: Pokemon): void => {
   const index = wishlist.value.findIndex((item) => item.id === pokemon.id)
@@ -68,16 +70,8 @@ const removeFromWishlist = (pokemon: WishlistItem): void => {
 }
 
 onMounted((): void => {
-  try {
-    const savedWishlist = localStorage.getItem(STORAGE_KEY)
-    wishlist.value = savedWishlist
-      ? (JSON.parse(savedWishlist) as WishlistItem[])
-      : []
-  } catch {
-    wishlist.value = []
-  } finally {
-    hasLoadedWishlist.value = true
-  }
+  wishlist.value = loadWishlist(localStorage)
+  hasLoadedWishlist.value = true
 })
 </script>
 
