@@ -33,11 +33,20 @@ jobs:
       - name: Hono Typecheck
         run: npm run typecheck:backend
 
+      - name: Backend lint
+        run: npm run lint:backend
+
+      - name: Backend Prettier
+        run: npm run format:check:backend
+
       - name: Vitest
         run: npm test
 
-      - name: Backend API tests
-        run: npm run test:api
+      - name: Backend Vitest
+        run: npm run test:backend
+
+      - name: Build Hono backend
+        run: npm run build:backend
 
       - name: Build Nuxt application
         run: npm run build

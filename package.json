@@ -9,10 +9,14 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "format:check:backend": "prettier --check backend tests/backend.test.ts tsconfig.backend.json",
     "preview": "nuxt preview",
     "api": "tsx backend/index.ts",
     "test": "vitest run",
+    "test:backend": "vitest run tests/backend.test.ts",
     "test:api": "vitest run tests/backend.test.ts",
+    "build:backend": "tsc -p tsconfig.backend.json --outDir dist/backend",
+    "lint:backend": "eslint backend tests/backend.test.ts",
     "typecheck:backend": "tsc --noEmit -p tsconfig.backend.json",
     "typecheck": "nuxt typecheck",
     "postinstall": "nuxt prepare"
@@ -27,6 +31,7 @@
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
     "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
     "prettier": "^3.9.10",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
