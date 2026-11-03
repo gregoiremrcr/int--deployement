@@ -1,87 +1,77 @@
-# Nuxt Minimal Starter
+# Pokémon Wishlist
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+![CI/CD](https://github.com/gregoiremrcr/int--deployement/actions/workflows/ci.yml/badge.svg?branch=main)
+[![Coverage](https://codecov.io/gh/gregoiremrcr/int--deployement/branch/main/graph/badge.svg)](https://codecov.io/gh/gregoiremrcr/int--deployement)
 
-## Setup
+Application Nuxt avec des pages Pokémon rendues côté serveur, API Hono sur AWS Lambda/API Gateway et persistance Supabase.
 
-Make sure to install dependencies:
-
-```bash
-# npm
-npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
+## Développement et validations
 
 ```bash
-# npm
+npm ci
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
-
-Build the application for production:
+Commandes utiles:
 
 ```bash
-# npm
+npm run lint
+npm run typecheck
+npm run typecheck:backend
+npm test
+npm run test:integration
+npm run test:coverage
+npm run test:e2e
 npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+npm run ci
 ```
 
-Locally preview production build:
+Les tests d’intégration ne s’exécutent que si `SUPABASE_TEST_URL` et `SUPABASE_TEST_PUBLISHABLE_KEY` sont définies. Utiliser exclusivement un projet Supabase de test. Les tests E2E utilisent le stockage mémoire (`WISHLIST_STORAGE=memory`) et ne modifient pas Supabase.
+
+Le rapport de couverture Vitest est écrit dans `coverage/`. La CI le publie comme artefact GitHub et ajoute les pourcentages au résumé du workflow. Le badge Codecov est facultatif: activer `CODECOV_ENABLED=true` et définir `CODECOV_TOKEN` après avoir créé le projet Codecov.
+
+## Variables et secrets
+
+`.env.example` contient uniquement les variables nécessaires à l’application locale. `.env.test.example` documente les variables d’intégration et de migration; il ne contient que des valeurs fictives.
+
+| Usage                           | Noms                                                                          | Emplacement                                                                                                                   |
+| ------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Frontend local                  | `NUXT_PUBLIC_API_BASE_URL`                                                    | `.env` local; URL racine de Hono                                                                                              |
+| API locale                      | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `ALLOWED_ORIGIN`                         | `.env` local; URL et clé publishable/anon, jamais `service_role`                                                              |
+| Vercel                          | `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`                          | Secrets de l’environnement GitHub `production`                                                                                |
+| Frontend en production          | `NUXT_PUBLIC_API_BASE_URL`                                                    | Variable Production des paramètres du projet Vercel; le workflow la transmet aussi depuis la sortie SAM                       |
+| AWS                             | `AWS_ROLE_ARN`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `DATABASE_URL`    | Secrets de l’environnement GitHub `production`; rôle AWS fédéré par OIDC et connexion Postgres uniquement pour les migrations |
+| Configuration AWS non secrète   | `AWS_REGION`, `AWS_SAM_STACK_NAME`, `ALLOWED_ORIGIN`, `VERCEL_PRODUCTION_URL` | Variables de l’environnement GitHub `production`                                                                              |
+| Tests Supabase                  | `SUPABASE_TEST_URL`, `SUPABASE_TEST_PUBLISHABLE_KEY`                          | Secrets de l’environnement GitHub `integration-tests` ou variables du processus local; jamais les identifiants de production  |
+| Badge de couverture (optionnel) | `CODECOV_TOKEN`, `CODECOV_ENABLED=true`                                       | Secret et variable GitHub Actions; activer après création du projet Codecov                                                   |
+
+Créer l’environnement GitHub `production` et autoriser le rôle AWS à faire confiance au fournisseur OIDC GitHub pour ce dépôt et la branche `main`. Le domaine Vercel et `ALLOWED_ORIGIN` doivent être des origines HTTPS sans chemin ni slash final. Le workflow n’utilise aucun secret pour les pull requests.
+
+Pour une exécution SAM manuelle, copier `samconfig.toml.example` vers `samconfig.toml` puis renseigner les paramètres localement. `samconfig.toml` est ignoré par Git. La CI passe les paramètres SAM sans les enregistrer dans le dépôt.
+
+## Supabase et migrations
+
+`supabase/init.sql` initialise la wishlist et ses politiques RLS. Les migrations versionnées sont appliquées par `npm run db:migrate`; le runner prend un verrou PostgreSQL, applique chaque fichier dans une transaction et enregistre les versions dans `public.schema_migrations`.
+
+Le workflow de production exécute les migrations en attente avant la mise à jour de Lambda. Les migrations doivent rester compatibles avec la version applicative précédente pendant le déploiement. Le runner ne propose pas de migrations descendantes automatiques: corriger une migration déjà appliquée avec une nouvelle migration vers l’avant.
+
+## Déploiement et smoke tests
+
+Un push validé sur `main` déploie d’abord les migrations et l’API avec SAM, vérifie `GET /health`, puis construit et déploie Nuxt sur Vercel. Après le déploiement frontend, la CI vérifie l’API, la lecture de `/wishlist`, la page d’accueil SSR et `/pokemon/pikachu`.
+
+Ces vérifications distantes ne sont exécutées que par le workflow de déploiement; elles n’ont pas été lancées pendant cet audit. Pour tester une API ou une production manuellement sans écrire de données:
 
 ```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
+API_BASE_URL=https://api.example.com npm run smoke:api
+API_BASE_URL=https://api.example.com FRONTEND_BASE_URL=https://app.example.com npm run smoke:production
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+Sous PowerShell, définir les mêmes variables avec `$env:API_BASE_URL` et `$env:FRONTEND_BASE_URL` avant `npm.cmd run smoke:production`.
 
-## Migrations SQL
+## SSR, SSG et retour arrière
 
-Initialiser d'abord la base avec `supabase/init.sql`, puis appliquer les migrations versionnées :
+Le projet conserve le rendu SSR Nuxt pour les pages dynamiques `/pokemon/:name`. Les routes ne sont plus énumérées à partir de PokeAPI pendant le build: celui-ci ne contacte pas PokeAPI, et une fiche est rendue à la demande. Le pré-rendu SSG est une option alternative du cours; il n’est pas retenu car il demanderait une liste locale/versionnée des Pokémon ou un appel réseau contrôlé.
 
-```bash
-npm run db:migrate
-```
+Pour restaurer une version frontend stable, utiliser la fonction de rollback du projet dans Vercel. Pour l’API, rétablir le code stable par un revert Git sur `main`, ce qui déclenche une nouvelle livraison SAM. Les changements de schéma Supabase se réparent par une migration compensatoire; ne pas restaurer une ancienne version d’application si elle n’est pas compatible avec le schéma courant.
 
-Le runner utilise `DATABASE_URL` ou `SUPABASE_DB_URL`. Il crée automatiquement la table `public.schema_migrations`, applique les fichiers de `supabase/migrations` dans l'ordre, et ignore ceux déjà enregistrés.
-
-La connexion PostgreSQL directe est réservée au runner et ne doit jamais être exposée au frontend. La clé Supabase `anon`/publishable ne permet pas d'exécuter ces migrations.
+La procédure détaillée, l’état des exercices et les éléments de configuration manuelle figurent dans [docs/CI-CD-EXERCICES.md](docs/CI-CD-EXERCICES.md).

@@ -4,6 +4,8 @@ import { fetchPokemon } from '~~/utils/pokeapi'
 
 const route = useRoute()
 const { t, locale } = useI18n()
+const config = useRuntimeConfig()
+const pokeApiBaseUrl = String(config.public.pokeApiBaseUrl)
 const languages = [
   { code: 'fr', label: 'Français' },
   { code: 'en', label: 'English' },
@@ -16,7 +18,7 @@ const name = computed(() => String(route.params.name ?? '').trim())
 
 const { data: pokemon, error } = await useAsyncData(
   () => `pokemon-${name.value.toLowerCase()}`,
-  () => fetchPokemon(name.value),
+  () => fetchPokemon(name.value, pokeApiBaseUrl),
 )
 
 if (error.value || !pokemon.value) {
@@ -30,10 +32,14 @@ if (error.value || !pokemon.value) {
 const pokemonData = pokemon.value
 const likeStorageKey = computed(() => `pokemon-like-${pokemonData.id}`)
 const isLiked = ref(false)
+const hasLoadedLike = ref(false)
 const likeCount = computed(() => (isLiked.value ? 1 : 0))
 
 const formatName = (value: string): string =>
   value.charAt(0).toUpperCase() + value.slice(1)
+const setLocale = (value: string): void => {
+  locale.value = value
+}
 
 const toggleLike = (): void => {
   isLiked.value = !isLiked.value
@@ -42,6 +48,7 @@ const toggleLike = (): void => {
 
 onMounted(() => {
   isLiked.value = localStorage.getItem(likeStorageKey.value) === 'true'
+  hasLoadedLike.value = true
 })
 
 useHead(() => ({
@@ -61,7 +68,11 @@ useHead(() => ({
   <main class="pokemon-page">
     <div class="language-switcher">
       <label for="language-select">Langue</label>
-      <select id="language-select" v-model="locale">
+      <select
+        id="language-select"
+        :value="locale"
+        @change="setLocale(($event.target as HTMLSelectElement).value)"
+      >
         <option
           v-for="language in languages"
           :key="language.code"
@@ -99,6 +110,7 @@ useHead(() => ({
         <button
           class="like-button"
           type="button"
+          :disabled="!hasLoadedLike"
           :aria-label="isLiked ? t('pokemon.unlike') : t('pokemon.like')"
           :aria-pressed="isLiked"
           @click="toggleLike"

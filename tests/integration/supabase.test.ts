@@ -1,18 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
-import { config } from 'dotenv'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { createWishlistApp } from '../../backend/app'
 import type { WishlistItem } from '../../types/wishlist-item'
 
-config({ path: '.env.test' })
-config()
-
-const testUrl =
-  process.env.SUPABASE_TEST_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL
-const testKey =
-  process.env.SUPABASE_TEST_PUBLISHABLE_KEY ??
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+const testUrl = process.env.SUPABASE_TEST_URL
+const testKey = process.env.SUPABASE_TEST_PUBLISHABLE_KEY
 const hasTestDatabase = Boolean(testUrl && testKey)
+const testPokemonIds = [
+  900001, 900002, 900010, 900011, 900012, 900013, 900014, 900015, 900016,
+]
 
 const testPokemon = (id: number): WishlistItem => ({
   id,
@@ -31,7 +27,10 @@ describeIntegration('wishlist API avec une vraie base Supabase', () => {
   const app = createWishlistApp()
 
   const cleanup = async (): Promise<void> => {
-    const { error } = await supabase.from('wishlist').delete().neq('id', 0)
+    const { error } = await supabase
+      .from('wishlist')
+      .delete()
+      .in('id', testPokemonIds)
 
     if (error) throw error
   }

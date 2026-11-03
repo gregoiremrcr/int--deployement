@@ -1,251 +1,45 @@
-# Audit de préparation au déploiement
+# Audit CI/CD — Pokémon Wishlist
 
-Date de l’audit : 3 novembre 2026
+Mise à jour du 3 novembre 2026. Ce document décrit les changements préparés dans le dépôt; aucun déploiement ni contrôle d’un compte AWS, Supabase ou Vercel n’a été effectué.
 
-## Conclusion
+## Architecture retenue
 
-Le projet est proche d’un déploiement fonctionnel, mais il manque encore la chaîne de déploiement de l’API et la configuration des variables d’environnement de production.
+- Frontend Nuxt rendu côté serveur sur Vercel.
+- API Hono sur AWS Lambda et API Gateway avec AWS SAM.
+- Données wishlist et likes dans Supabase.
 
-L’architecture prévue semble être :
+Les exemples S3/CloudFront du cours sont des variantes statiques, hors périmètre de cette architecture.
 
-- frontend Nuxt déployé sur Vercel ;
-- API Hono déployée sur AWS Lambda + API Gateway avec SAM ;
-- données stockées dans Supabase.
+## État du dépôt
 
-En l’état, le frontend pointe par défaut vers `http://localhost:8787`. Il ne pourra donc pas communiquer avec l’API en production tant que `NUXT_PUBLIC_API_BASE_URL` n’est pas défini avec l’URL publique API Gateway.
+| Élément              | État                                                                                                                                                          | Vérification ou configuration restante                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Build Nuxt           | L’appel de génération des 2 000 routes PokeAPI a été retiré. Les routes dynamiques sont servies en SSR à la demande.                                          | Le build local passe sur le Node disponible, avec un avertissement de version; le workflow utilise Node 22. |
+| CI                   | Lint, locales, format, types, tests, couverture, E2E, builds frontend/backend et validation/build SAM sont déclarés.                                          | Confirmer le résultat du prochain run GitHub après configuration.                                           |
+| Tests Supabase       | Appelés par la CI avec `SUPABASE_TEST_*`; ignorés si les identifiants dédiés manquent. Nettoyage des seules fixtures `900001`, `900002`, `900010` à `900016`. | Créer et utiliser un projet de test dédié.                                                                  |
+| Migrations           | Le runner transactionnel/idempotent existant s’exécute avant le déploiement Lambda sur `main`.                                                                | Configurer `DATABASE_URL` PostgreSQL de production dans l’environnement GitHub protégé.                     |
+| Déploiement API      | Workflow SAM préparé avec OIDC et smoke test `GET /health`.                                                                                                   | Rôle IAM, confiance OIDC, paramètres Supabase et origine CORS restent à configurer.                         |
+| Déploiement frontend | Vercel déployé après l’API; le workflow transmet l’URL API issue de SAM et lance un smoke test SSR.                                                           | Secrets Vercel, domaine public et variables Production restent à configurer.                                |
+| Smoke tests          | Scripts non destructifs: health API, lecture wishlist, accueil et fiche SSR Pokémon.                                                                          | Les tests distants ne s’exécutent qu’après un vrai déploiement, non demandé ici.                            |
+| Rollback             | Procédure documentée pour Vercel, AWS et migrations Supabase compensatoires.                                                                                  | À exécuter et vérifier par le propriétaire dans les comptes de production.                                  |
+| Couverture           | Vitest produit texte, JSON et LCOV; le workflow publie l’artefact et un tableau de pourcentages. L’upload Codecov et le badge sont préparés mais désactivés.  | Créer le projet Codecov puis configurer `CODECOV_TOKEN` et `CODECOV_ENABLED=true` si souhaité.              |
 
-## État vérifié
+## Variables à configurer
 
-| Élément                 | État                | Commentaire                                                                                                    |
-| ----------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Typecheck backend       | OK                  | `npm.cmd run typecheck:backend` passe                                                                          |
-| Tests backend           | OK                  | 4 tests passent                                                                                                |
-| Build backend           | OK                  | `npm.cmd run build:backend` passe                                                                              |
-| Lint / locales / format | OK                  | Le lint ne remonte que 4 warnings Vue                                                                          |
-| Build/typecheck Nuxt    | À corriger          | Échec lors de l’appel réseau à PokeAPI dans `nuxt.config.ts`                                                   |
-| CI GitHub               | Partiel             | Vérifie et build, mais ne déploie que le frontend Vercel                                                       |
-| Déploiement API AWS     | Manquant            | Aucun workflow, script npm ou procédure automatisée                                                            |
-| AWS SAM CLI             | Manquant localement | La commande `sam` n’est pas installée sur la machine auditée                                                   |
-| Base Supabase           | OK                  | Les migrations `000_schema_migrations.sql` et `001_likes.sql` ont été appliquées avec succès sur la base cible |
-| Docker                  | Présent             | À valider avec un build et un démarrage en environnement de déploiement                                        |
+Les valeurs d’exemple sont dans `.env.example`, `.env.test.example` et `samconfig.toml.example`; elles sont fictives. Les variables requises et leur emplacement sont détaillés dans [README.md](README.md) et [docs/CI-CD-EXERCICES.md](docs/CI-CD-EXERCICES.md).
 
-## Bloquants à traiter
+En résumé, l’environnement GitHub `production` doit contenir les secrets AWS/Supabase/Vercel et les variables non secrètes de région, origine autorisée et URL publique. Le rôle AWS doit accepter le sujet OIDC `repo:gregoiremrcr/int--deployement:environment:production`, tandis que l’environnement GitHub limite les déploiements à `main`. Les tests Supabase utilisent exclusivement un projet distinct et les secrets `SUPABASE_TEST_*`.
 
-### 1. Déployer l’API et récupérer son URL publique
+## Vérifications locales réalisées
 
-Le fichier `template.yaml` décrit bien une Lambda et une API Gateway, mais rien dans `.github/workflows/ci.yml` ne lance `sam build` ou `sam deploy`.
+- `npm ci`: réussi après autorisation réseau; npm signale que Node local `24.8.0` est antérieur au minimum demandé par cette version de Nuxt.
+- `npm run lint`, vérification des locales, formatage, typecheck Nuxt/backend et lint/format backend: réussis; ESLint conserve quatre avertissements Vue préexistants sur les balises HTML autofermantes.
+- `npm test`: 9 tests réussis.
+- `npm run test:integration`: 3 tests ignorés faute d’identifiants de test dédiés.
+- `npm run test:coverage`: 47 % de lignes sur les fichiers couverts par Vitest; rapport généré localement.
+- E2E Playwright: les quatre scénarios ont réussi après isolation de PokeAPI et de Supabase par des fixtures locales. Sous Windows, le processus n’a pas quitté après les résultats; il a été arrêté manuellement.
+- `npm run build`: réussi; l’appel réseau PokeAPI n’apparaît plus dans le build.
+- `npm run smoke:production`: réussi contre le build Nuxt local et l’API Hono en mémoire; health, lecture wishlist, accueil SSR et fiche Pokémon SSR répondent HTTP 200.
+- SAM CLI non installé localement; le template n’a donc pas été validé par SAM sur cette machine.
 
-À faire :
-
-1. Installer/configurer AWS SAM CLI pour un déploiement manuel, ou ajouter un job GitHub Actions dédié.
-2. Configurer une identité AWS ayant les droits nécessaires pour CloudFormation, Lambda, API Gateway, S3 et IAM.
-3. Créer `samconfig.toml` à partir de `samconfig.toml.example`.
-4. Renseigner `SupabaseUrl`, `SupabasePublishableKey` et `AllowedOrigin`.
-5. Exécuter et vérifier :
-
-   ```bash
-   sam build
-   sam deploy --guided
-   ```
-
-6. Tester l’URL produite avec `GET /health`.
-
-Le `AllowedOrigin` ne devrait pas rester à `*` en production : il doit être l’URL Vercel réelle, par exemple `https://mon-projet.vercel.app`.
-
-### 2. Configurer Vercel avec l’URL de l’API
-
-Le pipeline Vercel attend déjà les secrets suivants :
-
-- `VERCEL_TOKEN`
-- `VERCEL_ORG_ID`
-- `VERCEL_PROJECT_ID`
-
-Il faut également définir dans Vercel, pour l’environnement **Production** :
-
-```text
-NUXT_PUBLIC_API_BASE_URL=https://<api-id>.execute-api.<region>.amazonaws.com
-```
-
-Cette variable est lue au build Nuxt. Après sa création ou modification, il faut relancer un déploiement Vercel.
-
-Ne pas mettre `http://localhost:8787` en production.
-
-### 3. Stabiliser le build Nuxt sans dépendance réseau fragile
-
-`nuxt.config.ts` appelle PokeAPI pendant `nitro:config` pour générer environ 2 000 routes. Cela rend le build dépendant de la disponibilité de PokeAPI et du réseau du runner.
-
-Le build/typecheck a échoué pendant l’audit avec `fetch failed` sur cet appel.
-
-Solutions recommandées :
-
-- déplacer cette génération vers une étape contrôlée et gérer les erreurs réseau ; ou
-- ne pas pré-rendre les 2 000 pages et laisser les pages être rendues à la demande ; ou
-- utiliser une liste/version de données mise en cache dans le dépôt si le pré-rendu est indispensable.
-
-Le choix doit être fait avant le déploiement, sinon un incident PokeAPI peut bloquer chaque mise en production.
-
-### 4. Vérifier la base Supabase cible
-
-Le fichier `supabase/init.sql` doit être exécuté sur le projet Supabase de production. Il crée la table `public.wishlist`, l’index, le trigger de limite à 6 éléments et les policies RLS.
-
-À vérifier :
-
-- l’URL Supabase correspond au projet de production ;
-- la clé utilisée est bien une clé publishable/anon, jamais une `service_role` exposée ;
-- `GET`, `POST` et `DELETE` fonctionnent avec cette clé ;
-- les policies anonymes sont acceptées par le besoin métier.
-
-Attention : les policies actuelles permettent à n’importe quel client anonyme de lire, ajouter et supprimer des éléments. C’est fonctionnel pour une wishlist publique, mais ce n’est pas sécurisé pour des données privées ou multi-utilisateurs. Une authentification et des policies par utilisateur seront nécessaires si le projet doit gérer plusieurs comptes.
-
-## Configuration à harmoniser
-
-Les fichiers `.env.example` utilisent :
-
-```text
-SUPABASE_URL=...
-SUPABASE_ANON_KEY=...
-```
-
-Les fichiers locaux utilisent plutôt les noms `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Le backend accepte les deux formats, mais cette duplication peut provoquer des erreurs de configuration.
-
-À faire : choisir un seul format documenté pour le backend, idéalement :
-
-```text
-SUPABASE_URL=https://<project>.supabase.co
-SUPABASE_ANON_KEY=<publishable-or-anon-key>
-ALLOWED_ORIGIN=https://<frontend>.vercel.app
-NUXT_PUBLIC_API_BASE_URL=https://<api-gateway-url>
-```
-
-Ajouter `ALLOWED_ORIGIN` dans `.env.example` et documenter séparément les variables Vercel et AWS. Les fichiers `.env` locaux ne sont pas suivis par Git, ce qui est correct.
-
-## Déploiement Docker
-
-Le `Dockerfile` démarre le frontend Nuxt et l’API Hono dans le même conteneur, sur les ports 3000 et 8787. C’est pratique en local mais moins adapté à une plateforme qui attend un seul port ou un seul processus.
-
-Avant de considérer Docker prêt pour la production :
-
-- exécuter `docker build -t pokemon-wishlist .` ;
-- démarrer le conteneur avec des variables de production ;
-- tester `/` sur le port 3000 et `/health` sur le port 8787 ;
-- ajouter un healthcheck et une stratégie de gestion des deux processus, ou séparer frontend et API en deux services ;
-- vérifier que la plateforme cible autorise bien deux ports exposés.
-
-Le conteneur utilise `tsx` au runtime et lance deux processus via `sh`. Une séparation en deux déploiements est préférable si Docker devient le mode de production principal.
-
-## CI/CD manquant
-
-Le workflow actuel :
-
-- valide le code ;
-- construit le backend ;
-- exécute les tests E2E ;
-- déploie le frontend sur Vercel lors d’un push sur `main`.
-
-Il ne :
-
-- déploie pas la Lambda/API Gateway ;
-- ne vérifie pas `sam validate` ;
-- ne teste pas une API déployée ;
-- ne lance pas le test d’intégration Supabase dans le pipeline ;
-- ne vérifie pas explicitement la présence des variables de production.
-
-Pour une chaîne complète, ajouter un job AWS après les validations, avec des secrets ou une OIDC GitHub vers AWS. Le job devrait faire `sam build`, `sam deploy` puis un smoke test de `/health`.
-
-## Ordre conseillé avant mise en production
-
-1. Décider si le déploiement cible est Vercel + AWS Lambda, ou Docker uniquement.
-2. Corriger le build Nuxt pour supprimer sa dépendance réseau non gérée.
-3. Créer/valider la table Supabase en production.
-4. Déployer l’API AWS et tester `/health`, `/wishlist`, `POST` et `DELETE`.
-5. Configurer `NUXT_PUBLIC_API_BASE_URL` dans Vercel avec l’URL API réelle.
-6. Configurer `ALLOWED_ORIGIN` avec le domaine frontend réel.
-7. Ajouter le déploiement AWS au CI/CD, ou documenter une procédure manuelle reproductible.
-8. Faire un déploiement Vercel et valider le parcours complet dans le navigateur.
-9. Ajouter un domaine, HTTPS, logs/alertes et une stratégie de sauvegarde Supabase si le projet est destiné à être utilisé réellement.
-
-## Commandes de validation utiles
-
-````bash
-npm ci
-npm run ci
-npm run api
-npm run build
-npm run build:backend
-sam validate --template-file template.yaml
-sam build
-sam deploy
-
-## Mise a jour du 3 novembre 2026
-
-La connexion PostgreSQL de migration a ete validee avec :
-
-```bash
-npm run db:migrate
-````
-
-Resultat confirme :
-
-- `000_schema_migrations.sql` appliquee ;
-- `001_likes.sql` appliquee ;
-- la table `public.schema_migrations` est suivie par le runner.
-
-Le script `scripts/migrate.mjs` charge automatiquement `.env` via `dotenv/config`. La variable `DATABASE_URL` reste reservee aux migrations et ne doit pas etre exposee au frontend ni commitee dans Git.
-
-```
-
-Sur Windows, si PowerShell bloque `npm.ps1`, utiliser `npm.cmd` ou ajuster la policy d’exécution de la machine.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Voici comment faire.
-1. Trouver l’URL de l’API AWS
-Après le déploiement SAM, récupère l’output WishlistApiUrl :
-sam deploy
-ou directement avec AWS CLI :
-aws cloudformation describe-stacks `
-  --stack-name NOM_DE_TA_STACK `
-  --query "Stacks[0].Outputs[?OutputKey=='WishlistApiUrl'].OutputValue" `
-  --output text
-Tu obtiendras une URL similaire à :
-https://abc123xyz.execute-api.eu-west-3.amazonaws.com
-Ne rajoute pas /health dans la variable : garde uniquement l’URL de base.
-2. Ajouter la variable dans Vercel
-Dans Vercel :
-1. Ouvre ton projet.
-2. Va dans Settings → Environment Variables.
-3. Clique sur Add New.
-4. Renseigne :
-Name:  NUXT_PUBLIC_API_BASE_URL
-Value: https://abc123xyz.execute-api.eu-west-3.amazonaws.com
-5. Sélectionne uniquement Production.
-6. Clique sur Save.
-L’URL doit être celle d’API Gateway, pas :
-http://localhost:8787
-3. Redéployer
-Comme cette variable est utilisée pendant le build Nuxt :
-1. Va dans l’onglet Deployments.
-2. Ouvre le dernier déploiement.
-3. Clique sur les trois points.
-4. Sélectionne Redeploy.
-5. Vérifie que l’environnement choisi est Production.
-Le pipeline GitHub déploiera ensuite automatiquement sur main, à condition que les secrets suivants soient déjà configurés dans GitHub :
-VERCEL_TOKEN
-VERCEL_ORG_ID
-VERCEL_PROJECT_ID
-Tu peux tester l’API avec :
-https://abc123xyz.execute-api.eu-west-3.amazonaws.com/health
-Dans ton projet, l’URL AWS est générée par la sortie WishlistApiUrl de [template.yaml (line 75)](C:/iim/m1 iwid/inté%2Bdeployement/template.yaml:75).
-```
+L’intégration réelle Supabase, la validation SAM distante, les builds GitHub, les smoke tests de production, les variables de comptes, les permissions IAM et les déploiements restent non vérifiés.

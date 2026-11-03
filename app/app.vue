@@ -14,6 +14,7 @@ const config = useRuntimeConfig()
 const appRoute = useRoute()
 const { t, locale } = useI18n()
 const apiBaseUrl = String(config.public.apiBaseUrl)
+const pokeApiBaseUrl = String(config.public.pokeApiBaseUrl)
 const languages = [
   { code: 'fr', label: 'Français' },
   { code: 'en', label: 'English' },
@@ -49,7 +50,7 @@ const searchPokemon = async (): Promise<void> => {
   errorMessage.value = ''
   result.value = null
   try {
-    result.value = await fetchPokemon(query)
+    result.value = await fetchPokemon(query, pokeApiBaseUrl)
   } catch {
     errorMessage.value = t('search.notFound')
   } finally {
@@ -88,6 +89,10 @@ const removeFromWishlist = async (pokemon: WishlistItem): Promise<void> => {
   await toggleWishlist(pokemon)
 }
 
+const setLocale = (value: string): void => {
+  locale.value = value
+}
+
 onMounted(async (): Promise<void> => {
   try {
     wishlist.value = await getWishlist(apiBaseUrl)
@@ -105,7 +110,11 @@ onMounted(async (): Promise<void> => {
   <main v-else class="page-shell">
     <div class="language-switcher">
       <label for="language-select">Langue</label>
-      <select id="language-select" v-model="locale">
+      <select
+        id="language-select"
+        :value="locale"
+        @change="setLocale(($event.target as HTMLSelectElement).value)"
+      >
         <option
           v-for="language in languages"
           :key="language.code"

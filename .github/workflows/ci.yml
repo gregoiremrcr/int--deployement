@@ -1,13 +1,20 @@
-name: CI
+name: CI/CD
 
 on:
   push:
   pull_request:
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+permissions:
+  contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate, test, and build
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,32 +31,59 @@ jobs:
       - name: Prepare Nuxt
         run: npx nuxt prepare
 
-      - name: Lint
-        run: npm run lint
+      - name: Lint and verify locales and formatting
+        run: |
+          npm run lint
+          npm run check:locales
+          npm run format:check
+          npm run format:check:backend
 
-      - name: Check locale keys
-        run: npm run check:locales
+      - name: Typecheck application and API
+        run: |
+          npm run typecheck
+          npm run typecheck:backend
 
-      - name: Prettier
-        run: npm run format:check
+      - name: Unit and backend tests
+        run: |
+          npm test
+          npm run test:backend
 
-      - name: Typecheck
-        run: npm run typecheck
+      - name: Test coverage
+        run: npm run test:coverage
 
-      - name: Hono Typecheck
-        run: npm run typecheck:backend
+      - name: Add coverage summary
+        if: always()
+        run: |
+          node --input-type=module <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          import { readFileSync } from 'node:fs'
+          try {
+            const { total } = JSON.parse(readFileSync('coverage/coverage-summary.json', 'utf8'))
+            console.log('| Metric | Coverage |')
+            console.log('| --- | ---: |')
+            for (const key of ['lines', 'statements', 'functions', 'branches']) {
+              console.log(`| ${key} | ${total[key].pct}% |`)
+            }
+          } catch {
+            console.log('Coverage summary is unavailable (the coverage run may have failed).')
+          }
+          NODE
 
-      - name: Backend lint
-        run: npm run lint:backend
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-coverage
+          path: coverage/
+          if-no-files-found: ignore
+          retention-days: 14
 
-      - name: Backend Prettier
-        run: npm run format:check:backend
-
-      - name: Vitest
-        run: npm test
-
-      - name: Backend Vitest
-        run: npm run test:backend
+      - name: Publish coverage to Codecov
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.CODECOV_ENABLED == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
       - name: Build Hono backend
         run: npm run build:backend
@@ -63,14 +97,138 @@ jobs:
       - name: Build Nuxt application
         run: npm run build
 
-  deploy-vercel:
-    name: Deploy frontend to Vercel
-    needs: build
+      - name: Set up AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      - name: Validate SAM template
+        run: sam validate --template-file template.yaml
+
+      - name: Build SAM application
+        run: sam build --template-file template.yaml
+
+  integration-tests:
+    name: Supabase integration tests
+    needs: validate
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: integration-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Supabase integration tests
+        run: npm run test:integration
+        env:
+          SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          SUPABASE_TEST_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_TEST_PUBLISHABLE_KEY }}
+
+  deploy-api:
+    name: Deploy API to AWS Lambda
+    needs: [validate, integration-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
+      id-token: write
+    outputs:
+      api_url: ${{ steps.api-url.outputs.value }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-3' }}
+      STACK_NAME: ${{ vars.AWS_SAM_STACK_NAME || 'pokemon-wishlist-api' }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      ALLOWED_ORIGIN: ${{ vars.ALLOWED_ORIGIN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Check production configuration is present
+        run: |
+          test -n "$AWS_ROLE_ARN"
+          test -n "$AWS_REGION"
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_PUBLISHABLE_KEY"
+          test -n "$DATABASE_URL"
+          test -n "$ALLOWED_ORIGIN"
+        env:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Configure AWS credentials with GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies for database migrations
+        run: npm ci
+
+      - name: Apply pending Supabase migrations
+        run: npm run db:migrate
+
+      - name: Set up AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      - name: Build SAM application
+        run: sam build --template-file template.yaml
+
+      - name: Deploy SAM application
+        run: >-
+          sam deploy
+          --template-file .aws-sam/build/template.yaml
+          --stack-name "$STACK_NAME"
+          --region "$AWS_REGION"
+          --capabilities CAPABILITY_IAM
+          --resolve-s3
+          --no-confirm-changeset
+          --no-fail-on-empty-changeset
+          --parameter-overrides
+          "SupabaseUrl=$SUPABASE_URL"
+          "SupabasePublishableKey=$SUPABASE_PUBLISHABLE_KEY"
+          "AllowedOrigin=$ALLOWED_ORIGIN"
+
+      - name: Export API Gateway URL
+        id: api-url
+        run: |
+          value="$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "$AWS_REGION" --query "Stacks[0].Outputs[?OutputKey=='WishlistApiUrl'].OutputValue" --output text)"
+          test -n "$value"
+          echo "value=$value" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke test API health
+        run: npm run smoke:api
+        env:
+          API_BASE_URL: ${{ steps.api-url.outputs.value }}
+
+  deploy-vercel:
+    name: Deploy frontend to Vercel
+    needs: deploy-api
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      NUXT_PUBLIC_API_BASE_URL: ${{ needs.deploy-api.outputs.api_url }}
+      FRONTEND_BASE_URL: ${{ vars.VERCEL_PRODUCTION_URL }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -80,22 +238,27 @@ jobs:
         with:
           node-version: 22
 
+      - name: Check Vercel configuration is present
+        run: |
+          test -n "$VERCEL_TOKEN"
+          test -n "$VERCEL_ORG_ID"
+          test -n "$VERCEL_PROJECT_ID"
+          test -n "$NUXT_PUBLIC_API_BASE_URL"
+          test -n "$FRONTEND_BASE_URL"
+
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
       - name: Pull Vercel project settings
         run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Build Vercel application
         run: vercel build --prod --token="$VERCEL_TOKEN"
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy Vercel application
         run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+
+      - name: Smoke test production API and frontend
+        run: npm run smoke:production
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          API_BASE_URL: ${{ needs.deploy-api.outputs.api_url }}

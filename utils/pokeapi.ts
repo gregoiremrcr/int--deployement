@@ -2,9 +2,12 @@ import type { Pokemon, PokemonApiResponse } from '../types/pokemon'
 
 const POKEAPI_URL = 'https://pokeapi.co/api/v2/pokemon'
 
-export const fetchPokemon = async (query: string): Promise<Pokemon> => {
+export const fetchPokemon = async (
+  query: string,
+  apiBaseUrl = POKEAPI_URL,
+): Promise<Pokemon> => {
   const response = await fetch(
-    `${POKEAPI_URL}/${encodeURIComponent(query.trim().toLowerCase())}`,
+    `${apiBaseUrl}/${encodeURIComponent(query.trim().toLowerCase())}`,
   )
 
   if (!response.ok) {

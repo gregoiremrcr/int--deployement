@@ -117,6 +117,10 @@ const createMemoryRepository = (): WishlistRepository => {
 }
 
 const createDefaultRepository = (): WishlistRepository => {
+  if (process.env.WISHLIST_STORAGE === 'memory') {
+    return createMemoryRepository()
+  }
+
   const hasSupabaseConfiguration =
     Boolean(process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL) &&
     Boolean(
@@ -139,6 +143,21 @@ export const createWishlistApp = (repository?: WishlistRepository): Hono => {
   const app = new Hono()
 
   app.use('*', cors({ origin: process.env.ALLOWED_ORIGIN ?? '*' }))
+
+  if (process.env.WISHLIST_STORAGE === 'memory') {
+    app.get('/__test/pokemon/:name', (context) => {
+      if (context.req.param('name') !== 'pikachu') {
+        return context.json({ message: 'Not Found' }, 404)
+      }
+
+      return context.json({
+        id: 900025,
+        name: 'pikachu',
+        sprites: { front_default: 'https://example.com/pikachu.png' },
+        types: [{ type: { name: 'electric' } }],
+      })
+    })
+  }
 
   app.get('/health', (context) => context.json({ status: 'ok' }))
 

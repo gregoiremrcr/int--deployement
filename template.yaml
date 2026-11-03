@@ -12,7 +12,6 @@ Parameters:
     Description: Supabase publishable key
   AllowedOrigin:
     Type: String
-    Default: '*'
     Description: Frontend origin allowed by CORS
 
 Globals:

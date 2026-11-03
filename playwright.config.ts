@@ -12,14 +12,19 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'npm run api',
+      command: 'node node_modules/tsx/dist/cli.mjs backend/index.ts',
       url: 'http://127.0.0.1:8787/health',
       reuseExistingServer: !process.env.CI,
+      env: { WISHLIST_STORAGE: 'memory' },
     },
     {
-      command: 'npm run dev -- --host 127.0.0.1',
+      command: 'node node_modules/nuxt/bin/nuxt.mjs dev --host 127.0.0.1',
       url: 'http://127.0.0.1:3000',
       reuseExistingServer: !process.env.CI,
+      env: {
+        NUXT_PUBLIC_API_BASE_URL: 'http://127.0.0.1:8787',
+        NUXT_PUBLIC_POKE_API_BASE_URL: 'http://127.0.0.1:8787/__test/pokemon',
+      },
     },
   ],
   projects: [

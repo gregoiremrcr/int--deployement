@@ -6,4 +6,4 @@ resolve_s3 = true
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 region = "eu-west-3"
-parameter_overrides = "SupabaseUrl=REPLACE_ME SupabasePublishableKey=REPLACE_ME AllowedOrigin=*"
+parameter_overrides = "SupabaseUrl=https://your-project-ref.supabase.co SupabasePublishableKey=REPLACE_ME AllowedOrigin=https://your-project.vercel.app"
