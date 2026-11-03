@@ -4,5 +4,6 @@ import { app } from './app'
 
 serve({
   fetch: app.fetch,
-  port: Number(process.env.PORT ?? 8787),
+  hostname: process.env.API_HOST ?? '0.0.0.0',
+  port: Number(process.env.API_PORT ?? process.env.PORT ?? 8787),
 })

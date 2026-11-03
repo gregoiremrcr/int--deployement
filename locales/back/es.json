@@ -1,0 +1,4 @@
+{
+  "errors": { "invalidJson": "JSON no válido", "invalidPokemon": "Pokémon no válido", "duplicate": "El Pokémon ya existe", "full": "La lista está limitada a 6 Pokémon", "notFound": "Pokémon no encontrado", "invalidId": "Identificador no válido", "loadFailed": "No se pudo cargar la lista", "createFailed": "No se pudo añadir el Pokémon", "deleteFailed": "No se pudo eliminar el Pokémon" },
+  "health": { "ok": "ok" }
+}

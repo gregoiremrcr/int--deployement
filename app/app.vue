@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import type { Pokemon } from '~~/types/pokemon'
 import type { WishlistItem } from '~~/types/wishlist-item'
 import { fetchPokemon } from '~~/utils/pokeapi'
@@ -10,7 +11,17 @@ import {
 import { addPokemon } from '~~/utils/wishlist'
 
 const config = useRuntimeConfig()
+const appRoute = useRoute()
+const { t, locale } = useI18n()
 const apiBaseUrl = String(config.public.apiBaseUrl)
+const languages = [
+  { code: 'fr', label: 'Français' },
+  { code: 'en', label: 'English' },
+  { code: 'zh', label: '中文' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'it', label: 'Italiano' },
+  { code: 'es', label: 'Español' },
+]
 const search = ref('')
 const result = ref<Pokemon | null>(null)
 const wishlist = ref<WishlistItem[]>([])
@@ -30,7 +41,7 @@ const isInWishlist = computed(() =>
 const searchPokemon = async (): Promise<void> => {
   const query = search.value.trim().toLowerCase()
   if (!query) {
-    errorMessage.value = 'Saisissez un nom ou un numéro de Pokémon.'
+    errorMessage.value = t('search.empty')
     result.value = null
     return
   }
@@ -41,7 +52,7 @@ const searchPokemon = async (): Promise<void> => {
     result.value = await fetchPokemon(query)
   } catch {
     errorMessage.value =
-      'Pokémon introuvable. Vérifiez le nom ou le numéro saisi.'
+      t('search.notFound')
   } finally {
     isLoading.value = false
   }
@@ -61,14 +72,14 @@ const toggleWishlist = async (pokemon: Pokemon): Promise<void> => {
 
     const addition = addPokemon(wishlist.value, pokemon)
     if (addition.status === 'full') {
-      errorMessage.value = 'La wishlist est limitée à 6 Pokémon.'
+      errorMessage.value = t('wishlist.limit')
       return
     }
 
     const savedPokemon = await createWishlistItem(apiBaseUrl, pokemon)
     wishlist.value = [...wishlist.value, savedPokemon]
   } catch {
-    errorMessage.value = 'Impossible de contacter l’API Hono.'
+    errorMessage.value = t('wishlist.apiError')
   } finally {
     isSaving.value = false
   }
@@ -82,7 +93,7 @@ onMounted(async (): Promise<void> => {
   try {
     wishlist.value = await getWishlist(apiBaseUrl)
   } catch {
-    errorMessage.value = 'Impossible de charger la wishlist depuis l’API Hono.'
+    errorMessage.value = t('wishlist.apiError')
   } finally {
     hasLoadedWishlist.value = true
   }
@@ -90,27 +101,35 @@ onMounted(async (): Promise<void> => {
 </script>
 
 <template>
-  <main class="page-shell">
+  <NuxtPage v-if="appRoute.path !== '/'" />
+
+  <main v-else class="page-shell">
+    <div class="language-switcher">
+      <label for="language-select">Langue</label>
+      <select id="language-select" v-model="locale">
+        <option v-for="language in languages" :key="language.code" :value="language.code">
+          {{ language.label }}
+        </option>
+      </select>
+    </div>
+
     <section class="hero">
-      <p class="eyebrow">Pokédex personnel</p>
-      <h1>Ma <span>wishlist</span> Pokémon</h1>
-      <p class="intro">
-        Recherchez un Pokémon, ajoutez-le à votre collection et retrouvez-le
-        après chaque visite.
-      </p>
+      <p class="eyebrow">{{ t('app.eyebrow') }}</p>
+      <h1>{{ t('app.title') }}</h1>
+      <p class="intro">{{ t('app.intro') }}</p>
       <form class="search-form" @submit.prevent="searchPokemon">
         <label class="sr-only" for="pokemon-search"
-          >Rechercher un Pokémon</label
+          >{{ t('search.label') }}</label
         >
         <input
           id="pokemon-search"
           v-model="search"
           type="search"
-          placeholder="Nom ou numéro, ex. pikachu ou 25"
+          :placeholder="t('search.placeholder')"
           autocomplete="off"
         />
         <button type="submit" :disabled="isLoading">
-          {{ isLoading ? 'Recherche…' : 'Rechercher' }}
+          {{ isLoading ? t('search.loading') : t('search.submit') }}
         </button>
       </form>
       <p v-if="errorMessage" class="message error" role="alert">
@@ -124,7 +143,7 @@ onMounted(async (): Promise<void> => {
       </div>
       <div class="result-content">
         <p class="pokemon-number">
-          N° {{ String(result.id).padStart(3, '0') }}
+          {{ t('pokemon.number', { number: String(result.id).padStart(3, '0') }) }}
         </p>
         <h2>{{ formatName(result.name) }}</h2>
         <div class="types">
@@ -140,10 +159,10 @@ onMounted(async (): Promise<void> => {
       >
         {{
           isSaving
-            ? 'Synchronisation…'
+            ? t('pokemon.saving')
             : isInWishlist
-              ? 'Retirer de la wishlist'
-              : 'Ajouter à la wishlist'
+              ? t('pokemon.remove')
+              : t('pokemon.add')
         }}
       </button>
     </section>
@@ -151,13 +170,11 @@ onMounted(async (): Promise<void> => {
     <section v-if="hasLoadedWishlist" class="wishlist-section">
       <div class="section-heading">
         <div>
-          <p class="eyebrow">Votre collection</p>
-          <h2>
-            Wishlist <span>({{ wishlist.length }})</span>
-          </h2>
+          <p class="eyebrow">{{ t('wishlist.eyebrow') }}</p>
+          <h2>{{ t('wishlist.title') }} <span>({{ wishlist.length }})</span></h2>
         </div>
         <p v-if="wishlist.length" class="saved-label">
-          Synchronisée avec l’API
+          {{ t('wishlist.synced') }}
         </p>
       </div>
       <div v-if="wishlist.length" class="wishlist-grid">
@@ -169,7 +186,7 @@ onMounted(async (): Promise<void> => {
           <button
             class="remove-button"
             type="button"
-            :aria-label="`Retirer ${formatName(pokemon.name)} de la wishlist`"
+            :aria-label="t('wishlist.remove', { name: formatName(pokemon.name) })"
             @click="removeFromWishlist(pokemon)"
           >
             ×
@@ -191,8 +208,8 @@ onMounted(async (): Promise<void> => {
       </div>
       <div v-else class="empty-state">
         <div class="empty-icon">☆</div>
-        <h3>Votre wishlist est vide</h3>
-        <p>Recherchez votre premier Pokémon pour commencer votre collection.</p>
+          <h3>{{ t('wishlist.emptyTitle') }}</h3>
+        <p>{{ t('wishlist.emptyDescription') }}</p>
       </div>
     </section>
   </main>
@@ -223,6 +240,22 @@ button {
   padding: 72px 24px 100px;
   background:
     radial-gradient(circle at 10% 0%, #e9efff 0, transparent 33%), #f7f8fc;
+}
+.language-switcher {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: min(100%, 1060px);
+  margin: 0 auto 24px;
+  color: #687080;
+  font-size: 0.85rem;
+}
+.language-switcher select {
+  padding: 6px 10px;
+  border: 1px solid #e3e6ef;
+  border-radius: 8px;
+  background: white;
+  color: #17202d;
 }
 .hero,
 .search-result,

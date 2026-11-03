@@ -24,6 +24,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Check locale keys
+        run: npm run check:locales
+
       - name: Prettier
         run: npm run format:check
 

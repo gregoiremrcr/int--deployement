@@ -1,0 +1,7 @@
+{
+  "app": { "eyebrow": "Pokédex personal", "title": "Mi lista de deseos Pokémon", "intro": "Busca un Pokémon, añádelo a tu colección y encuéntralo de nuevo en cada visita." },
+  "search": { "label": "Buscar un Pokémon", "placeholder": "Nombre o número, p. ej. pikachu o 25", "submit": "Buscar", "loading": "Buscando…", "empty": "Introduce el nombre o el número de un Pokémon.", "notFound": "Pokémon no encontrado. Comprueba el nombre o el número." },
+  "wishlist": { "eyebrow": "Tu colección", "title": "Lista de deseos", "synced": "Sincronizada con la API", "remove": "Quitar {name} de la lista de deseos", "emptyTitle": "Tu lista de deseos está vacía", "emptyDescription": "Busca tu primer Pokémon para comenzar tu colección.", "limit": "La lista de deseos está limitada a 6 Pokémon.", "apiError": "No se puede contactar con la API de Hono." },
+  "pokemon": { "number": "N.º {number}", "add": "Añadir a la lista", "remove": "Quitar de la lista", "saving": "Sincronizando…", "types": "Tipos" },
+  "detail": { "back": "Volver a la lista", "titleSuffix": "Pokédex", "description": "Ficha detallada de {name}." }
+}

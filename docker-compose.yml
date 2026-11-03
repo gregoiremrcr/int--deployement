@@ -1,0 +1,15 @@
+services:
+  pokemon-wishlist:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      API_HOST: 0.0.0.0
+      API_PORT: 8787
+      NITRO_HOST: 0.0.0.0
+      NITRO_PORT: 3000
+    ports:
+      - '3000:3000'
+      - '8787:8787'
