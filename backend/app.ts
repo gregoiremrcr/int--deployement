@@ -1,16 +1,107 @@
+import { createClient } from '@supabase/supabase-js'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import type { WishlistItem } from '../types/wishlist-item'
 
-export const createWishlistApp = (): Hono => {
-  const wishlist: WishlistItem[] = []
+type WishlistRow = {
+  id: number
+  name: string
+  image: string
+  types: string[]
+  added_at: string
+}
+
+type RepositoryError = Error & { code?: string }
+
+export interface WishlistRepository {
+  list: () => Promise<WishlistItem[]>
+  insert: (item: WishlistItem) => Promise<WishlistItem>
+  remove: (id: number) => Promise<boolean>
+}
+
+const toWishlistItem = (row: WishlistRow): WishlistItem => ({
+  id: row.id,
+  name: row.name,
+  image: row.image,
+  types: row.types,
+  addedAt: row.added_at,
+})
+
+const createSupabaseRepository = (): WishlistRepository => {
+  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key =
+    process.env.SUPABASE_ANON_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+
+  if (!url || !key) {
+    throw new Error(
+      'Les variables Supabase doivent être définies dans le fichier .env',
+    )
+  }
+
+  const supabase = createClient(url, key)
+
+  return {
+    async list() {
+      const { data, error } = await supabase
+        .from('wishlist')
+        .select('id, name, image, types, added_at')
+        .order('added_at', { ascending: true })
+
+      if (error) throw error
+      return (data as WishlistRow[]).map(toWishlistItem)
+    },
+
+    async insert(item) {
+      const { data, error } = await supabase
+        .from('wishlist')
+        .insert({
+          id: item.id,
+          name: item.name,
+          image: item.image,
+          types: item.types,
+          added_at: item.addedAt ?? new Date().toISOString(),
+        })
+        .select('id, name, image, types, added_at')
+        .single()
+
+      if (error) throw error
+      return toWishlistItem(data as WishlistRow)
+    },
+
+    async remove(id) {
+      const { data, error } = await supabase
+        .from('wishlist')
+        .delete()
+        .eq('id', id)
+        .select('id')
+
+      if (error) throw error
+      return data.length > 0
+    },
+  }
+}
+
+export const createWishlistApp = (repository?: WishlistRepository): Hono => {
+  let activeRepository = repository
+  const getRepository = (): WishlistRepository => {
+    activeRepository ??= createSupabaseRepository()
+    return activeRepository
+  }
+
   const app = new Hono()
 
   app.use('*', cors({ origin: '*' }))
 
   app.get('/health', (context) => context.json({ status: 'ok' }))
 
-  app.get('/wishlist', (context) => context.json(wishlist))
+  app.get('/wishlist', async (context) => {
+    try {
+      return context.json(await getRepository().list())
+    } catch {
+      return context.json({ error: 'Impossible de charger la wishlist' }, 500)
+    }
+  })
 
   app.post('/wishlist', async (context) => {
     let item: WishlistItem
@@ -30,33 +121,45 @@ export const createWishlistApp = (): Hono => {
       return context.json({ error: 'Pokémon invalide' }, 400)
     }
 
-    if (wishlist.some((pokemon) => pokemon.id === item.id)) {
-      return context.json({ error: 'Pokémon déjà présent' }, 409)
-    }
+    try {
+      const savedItem = await getRepository().insert(item)
+      return context.json(savedItem, 201)
+    } catch (error) {
+      const repositoryError = error as RepositoryError
 
-    if (wishlist.length >= 6) {
-      return context.json({ error: 'La wishlist est limitée à 6 Pokémon' }, 409)
-    }
+      if (repositoryError.code === '23505') {
+        return context.json({ error: 'Pokémon déjà présent' }, 409)
+      }
 
-    const savedItem: WishlistItem = {
-      ...item,
-      addedAt: item.addedAt ?? new Date().toISOString(),
-    }
-    wishlist.push(savedItem)
+      if (repositoryError.code === '23514') {
+        return context.json(
+          { error: 'La wishlist est limitée à 6 Pokémon' },
+          409,
+        )
+      }
 
-    return context.json(savedItem, 201)
+      return context.json({ error: "Impossible d'ajouter le Pokémon" }, 500)
+    }
   })
 
-  app.delete('/wishlist/:id', (context) => {
+  app.delete('/wishlist/:id', async (context) => {
     const id = Number(context.req.param('id'))
-    const index = wishlist.findIndex((pokemon) => pokemon.id === id)
 
-    if (index === -1) {
-      return context.json({ error: 'Pokémon introuvable' }, 404)
+    if (!Number.isInteger(id)) {
+      return context.json({ error: 'Identifiant invalide' }, 400)
     }
 
-    wishlist.splice(index, 1)
-    return context.body(null, 204)
+    try {
+      const removed = await getRepository().remove(id)
+
+      if (!removed) {
+        return context.json({ error: 'Pokémon introuvable' }, 404)
+      }
+
+      return context.body(null, 204)
+    } catch {
+      return context.json({ error: 'Impossible de supprimer le Pokémon' }, 500)
+    }
   })
 
   return app

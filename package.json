@@ -14,6 +14,7 @@
     "api": "tsx backend/index.ts",
     "test": "vitest run",
     "test:backend": "vitest run tests/backend.test.ts",
+    "test:integration": "vitest run tests/integration/supabase.test.ts",
     "test:api": "vitest run tests/backend.test.ts",
     "test:e2e": "playwright test",
     "build:backend": "tsc -p tsconfig.backend.json --outDir dist/backend",
@@ -24,6 +25,8 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.6",
+    "@supabase/supabase-js": "^2.118.0",
+    "dotenv": "^18.0.9",
     "hono": "^4.13.16",
     "nuxt": "^4.6.3",
     "vue": "^3.5.44",

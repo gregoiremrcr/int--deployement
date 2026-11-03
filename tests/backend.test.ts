@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { WishlistItem } from '../types/wishlist-item'
+import type { WishlistRepository } from '../backend/app'
 import { createWishlistApp } from '../backend/app'
 
 const pikachu: WishlistItem = {
@@ -10,8 +11,36 @@ const pikachu: WishlistItem = {
 }
 
 describe('wishlist Hono API', () => {
+  const createTestRepository = (): WishlistRepository => {
+    const items: WishlistItem[] = []
+
+    return {
+      list: async () => items,
+      insert: async (item) => {
+        if (items.some((savedItem) => savedItem.id === item.id)) {
+          const error = new Error('duplicate') as Error & { code: string }
+          error.code = '23505'
+          throw error
+        }
+
+        const savedItem = {
+          ...item,
+          addedAt: item.addedAt ?? '2026-01-01T00:00:00.000Z',
+        }
+        items.push(savedItem)
+        return savedItem
+      },
+      remove: async (id) => {
+        const index = items.findIndex((item) => item.id === id)
+        if (index === -1) return false
+        items.splice(index, 1)
+        return true
+      },
+    }
+  }
+
   it('GET /health renvoie 200', async () => {
-    const app = createWishlistApp()
+    const app = createWishlistApp(createTestRepository())
 
     const response = await app.request('/health')
 
@@ -20,7 +49,7 @@ describe('wishlist Hono API', () => {
   })
 
   it('GET /wishlist renvoie un tableau vide au démarrage', async () => {
-    const app = createWishlistApp()
+    const app = createWishlistApp(createTestRepository())
 
     const response = await app.request('/wishlist')
 
@@ -29,7 +58,7 @@ describe('wishlist Hono API', () => {
   })
 
   it('POST puis GET /wishlist conserve le Pokémon en mémoire', async () => {
-    const app = createWishlistApp()
+    const app = createWishlistApp(createTestRepository())
 
     const postResponse = await app.request('/wishlist', {
       method: 'POST',
@@ -44,7 +73,7 @@ describe('wishlist Hono API', () => {
   })
 
   it('DELETE /wishlist/:id supprime le Pokémon', async () => {
-    const app = createWishlistApp()
+    const app = createWishlistApp(createTestRepository())
 
     await app.request('/wishlist', {
       method: 'POST',
