@@ -1,4 +1,14 @@
 {
-  "errors": { "invalidJson": "Invalid JSON", "invalidPokemon": "Invalid Pokémon", "duplicate": "Pokémon already exists", "full": "The wishlist is limited to 6 Pokémon", "notFound": "Pokémon not found", "invalidId": "Invalid identifier", "loadFailed": "Unable to load the wishlist", "createFailed": "Unable to add the Pokémon", "deleteFailed": "Unable to delete the Pokémon" },
+  "errors": {
+    "invalidJson": "Invalid JSON",
+    "invalidPokemon": "Invalid Pokémon",
+    "duplicate": "Pokémon already exists",
+    "full": "The wishlist is limited to 6 Pokémon",
+    "notFound": "Pokémon not found",
+    "invalidId": "Invalid identifier",
+    "loadFailed": "Unable to load the wishlist",
+    "createFailed": "Unable to add the Pokémon",
+    "deleteFailed": "Unable to delete the Pokémon"
+  },
   "health": { "ok": "ok" }
 }

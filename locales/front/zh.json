@@ -1,7 +1,37 @@
 {
-  "app": { "eyebrow": "个人图鉴", "title": "我的宝可梦愿望清单", "intro": "搜索宝可梦，将它加入收藏，并在每次访问时再次查看。" },
-  "search": { "label": "搜索宝可梦", "placeholder": "名称或编号，例如 pikachu 或 25", "submit": "搜索", "loading": "搜索中…", "empty": "请输入宝可梦名称或编号。", "notFound": "找不到宝可梦，请检查名称或编号。" },
-  "wishlist": { "eyebrow": "你的收藏", "title": "愿望清单", "synced": "已与 API 同步", "remove": "从愿望清单中移除 {name}", "emptyTitle": "愿望清单为空", "emptyDescription": "搜索你的第一个宝可梦，开始收藏。", "limit": "愿望清单最多只能有 6 只宝可梦。", "apiError": "无法连接 Hono API。" },
-  "pokemon": { "number": "编号 {number}", "add": "加入愿望清单", "remove": "从愿望清单移除", "saving": "同步中…", "types": "属性" },
-  "detail": { "back": "返回愿望清单", "titleSuffix": "宝可梦图鉴", "description": "{name} 的详细信息。" }
+  "app": {
+    "eyebrow": "个人图鉴",
+    "title": "我的宝可梦愿望清单",
+    "intro": "搜索宝可梦，将它加入收藏，并在每次访问时再次查看。"
+  },
+  "search": {
+    "label": "搜索宝可梦",
+    "placeholder": "名称或编号，例如 pikachu 或 25",
+    "submit": "搜索",
+    "loading": "搜索中…",
+    "empty": "请输入宝可梦名称或编号。",
+    "notFound": "找不到宝可梦，请检查名称或编号。"
+  },
+  "wishlist": {
+    "eyebrow": "你的收藏",
+    "title": "愿望清单",
+    "synced": "已与 API 同步",
+    "remove": "从愿望清单中移除 {name}",
+    "emptyTitle": "愿望清单为空",
+    "emptyDescription": "搜索你的第一个宝可梦，开始收藏。",
+    "limit": "愿望清单最多只能有 6 只宝可梦。",
+    "apiError": "无法连接 Hono API。"
+  },
+  "pokemon": {
+    "number": "编号 {number}",
+    "add": "加入愿望清单",
+    "remove": "从愿望清单移除",
+    "saving": "同步中…",
+    "types": "属性"
+  },
+  "detail": {
+    "back": "返回愿望清单",
+    "titleSuffix": "宝可梦图鉴",
+    "description": "{name} 的详细信息。"
+  }
 }

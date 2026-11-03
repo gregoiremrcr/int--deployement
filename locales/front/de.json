@@ -1,7 +1,37 @@
 {
-  "app": { "eyebrow": "Persönlicher Pokédex", "title": "Meine Pokémon-Wunschliste", "intro": "Suche ein Pokémon, füge es deiner Sammlung hinzu und finde es bei jedem Besuch wieder." },
-  "search": { "label": "Pokémon suchen", "placeholder": "Name oder Nummer, z. B. pikachu oder 25", "submit": "Suchen", "loading": "Suche…", "empty": "Gib einen Pokémon-Namen oder eine Nummer ein.", "notFound": "Pokémon nicht gefunden. Überprüfe den Namen oder die Nummer." },
-  "wishlist": { "eyebrow": "Deine Sammlung", "title": "Wunschliste", "synced": "Mit der API synchronisiert", "remove": "{name} von der Wunschliste entfernen", "emptyTitle": "Deine Wunschliste ist leer", "emptyDescription": "Suche dein erstes Pokémon, um deine Sammlung zu beginnen.", "limit": "Die Wunschliste ist auf 6 Pokémon begrenzt.", "apiError": "Die Hono-API ist nicht erreichbar." },
-  "pokemon": { "number": "Nr. {number}", "add": "Zur Wunschliste hinzufügen", "remove": "Von der Wunschliste entfernen", "saving": "Synchronisierung…", "types": "Typen" },
-  "detail": { "back": "Zurück zur Wunschliste", "titleSuffix": "Pokédex", "description": "Detaillierte Übersicht von {name}." }
+  "app": {
+    "eyebrow": "Persönlicher Pokédex",
+    "title": "Meine Pokémon-Wunschliste",
+    "intro": "Suche ein Pokémon, füge es deiner Sammlung hinzu und finde es bei jedem Besuch wieder."
+  },
+  "search": {
+    "label": "Pokémon suchen",
+    "placeholder": "Name oder Nummer, z. B. pikachu oder 25",
+    "submit": "Suchen",
+    "loading": "Suche…",
+    "empty": "Gib einen Pokémon-Namen oder eine Nummer ein.",
+    "notFound": "Pokémon nicht gefunden. Überprüfe den Namen oder die Nummer."
+  },
+  "wishlist": {
+    "eyebrow": "Deine Sammlung",
+    "title": "Wunschliste",
+    "synced": "Mit der API synchronisiert",
+    "remove": "{name} von der Wunschliste entfernen",
+    "emptyTitle": "Deine Wunschliste ist leer",
+    "emptyDescription": "Suche dein erstes Pokémon, um deine Sammlung zu beginnen.",
+    "limit": "Die Wunschliste ist auf 6 Pokémon begrenzt.",
+    "apiError": "Die Hono-API ist nicht erreichbar."
+  },
+  "pokemon": {
+    "number": "Nr. {number}",
+    "add": "Zur Wunschliste hinzufügen",
+    "remove": "Von der Wunschliste entfernen",
+    "saving": "Synchronisierung…",
+    "types": "Typen"
+  },
+  "detail": {
+    "back": "Zurück zur Wunschliste",
+    "titleSuffix": "Pokédex",
+    "description": "Detaillierte Übersicht von {name}."
+  }
 }

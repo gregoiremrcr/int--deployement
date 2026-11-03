@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Hono wishlist API on AWS Lambda and API Gateway
+
+Parameters:
+  SupabaseUrl:
+    Type: String
+    Description: Supabase project URL
+  SupabasePublishableKey:
+    Type: String
+    NoEcho: true
+    Description: Supabase publishable key
+  AllowedOrigin:
+    Type: String
+    Default: '*'
+    Description: Frontend origin allowed by CORS
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Timeout: 15
+    MemorySize: 256
+    Environment:
+      Variables:
+        SUPABASE_URL: !Ref SupabaseUrl
+        SUPABASE_ANON_KEY: !Ref SupabasePublishableKey
+        ALLOWED_ORIGIN: !Ref AllowedOrigin
+
+Resources:
+  WishlistApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref AllowedOrigin
+        AllowHeaders:
+          - content-type
+          - authorization
+          - apikey
+        AllowMethods:
+          - GET
+          - POST
+          - DELETE
+          - OPTIONS
+
+  WishlistFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: backend/lambda.handler
+      Events:
+        WishlistApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref WishlistApi
+            Path: /{proxy+}
+            Method: ANY
+        WishlistApiRoot:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref WishlistApi
+            Path: /
+            Method: ANY
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        UseNpmCi: true
+        EntryPoints:
+          - backend/lambda.ts
+        Minify: true
+        Target: es2022
+        Sourcemap: true
+
+Outputs:
+  WishlistApiUrl:
+    Description: API Gateway URL
+    Value: !Sub https://${WishlistApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}

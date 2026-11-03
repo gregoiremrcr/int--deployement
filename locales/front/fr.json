@@ -1,7 +1,37 @@
 {
-  "app": { "eyebrow": "Pokédex personnel", "title": "Ma wishlist Pokémon", "intro": "Recherchez un Pokémon, ajoutez-le à votre collection et retrouvez-le après chaque visite." },
-  "search": { "label": "Rechercher un Pokémon", "placeholder": "Nom ou numéro, ex. pikachu ou 25", "submit": "Rechercher", "loading": "Recherche…", "empty": "Saisissez un nom ou un numéro de Pokémon.", "notFound": "Pokémon introuvable. Vérifiez le nom ou le numéro saisi." },
-  "wishlist": { "eyebrow": "Votre collection", "title": "Wishlist", "synced": "Synchronisée avec l’API", "remove": "Retirer {name} de la wishlist", "emptyTitle": "Votre wishlist est vide", "emptyDescription": "Recherchez votre premier Pokémon pour commencer votre collection.", "limit": "La wishlist est limitée à 6 Pokémon.", "apiError": "Impossible de contacter l’API Hono." },
-  "pokemon": { "number": "N° {number}", "add": "Ajouter à la wishlist", "remove": "Retirer de la wishlist", "saving": "Synchronisation…", "types": "Types" },
-  "detail": { "back": "Retour à la wishlist", "titleSuffix": "Pokédex", "description": "Fiche détaillée de {name}." }
+  "app": {
+    "eyebrow": "Pokédex personnel",
+    "title": "Ma wishlist Pokémon",
+    "intro": "Recherchez un Pokémon, ajoutez-le à votre collection et retrouvez-le après chaque visite."
+  },
+  "search": {
+    "label": "Rechercher un Pokémon",
+    "placeholder": "Nom ou numéro, ex. pikachu ou 25",
+    "submit": "Rechercher",
+    "loading": "Recherche…",
+    "empty": "Saisissez un nom ou un numéro de Pokémon.",
+    "notFound": "Pokémon introuvable. Vérifiez le nom ou le numéro saisi."
+  },
+  "wishlist": {
+    "eyebrow": "Votre collection",
+    "title": "Wishlist",
+    "synced": "Synchronisée avec l’API",
+    "remove": "Retirer {name} de la wishlist",
+    "emptyTitle": "Votre wishlist est vide",
+    "emptyDescription": "Recherchez votre premier Pokémon pour commencer votre collection.",
+    "limit": "La wishlist est limitée à 6 Pokémon.",
+    "apiError": "Impossible de contacter l’API Hono."
+  },
+  "pokemon": {
+    "number": "N° {number}",
+    "add": "Ajouter à la wishlist",
+    "remove": "Retirer de la wishlist",
+    "saving": "Synchronisation…",
+    "types": "Types"
+  },
+  "detail": {
+    "back": "Retour à la wishlist",
+    "titleSuffix": "Pokédex",
+    "description": "Fiche détaillée de {name}."
+  }
 }

@@ -1,7 +1,37 @@
 {
-  "app": { "eyebrow": "Personal Pokédex", "title": "My Pokémon wishlist", "intro": "Search for a Pokémon, add it to your collection and find it again on every visit." },
-  "search": { "label": "Search for a Pokémon", "placeholder": "Name or number, e.g. pikachu or 25", "submit": "Search", "loading": "Searching…", "empty": "Enter a Pokémon name or number.", "notFound": "Pokémon not found. Check the name or number." },
-  "wishlist": { "eyebrow": "Your collection", "title": "Wishlist", "synced": "Synced with the API", "remove": "Remove {name} from the wishlist", "emptyTitle": "Your wishlist is empty", "emptyDescription": "Search for your first Pokémon to start your collection.", "limit": "The wishlist is limited to 6 Pokémon.", "apiError": "Unable to contact the Hono API." },
-  "pokemon": { "number": "No. {number}", "add": "Add to wishlist", "remove": "Remove from wishlist", "saving": "Syncing…", "types": "Types" },
-  "detail": { "back": "Back to the wishlist", "titleSuffix": "Pokédex", "description": "Detailed sheet for {name}." }
+  "app": {
+    "eyebrow": "Personal Pokédex",
+    "title": "My Pokémon wishlist",
+    "intro": "Search for a Pokémon, add it to your collection and find it again on every visit."
+  },
+  "search": {
+    "label": "Search for a Pokémon",
+    "placeholder": "Name or number, e.g. pikachu or 25",
+    "submit": "Search",
+    "loading": "Searching…",
+    "empty": "Enter a Pokémon name or number.",
+    "notFound": "Pokémon not found. Check the name or number."
+  },
+  "wishlist": {
+    "eyebrow": "Your collection",
+    "title": "Wishlist",
+    "synced": "Synced with the API",
+    "remove": "Remove {name} from the wishlist",
+    "emptyTitle": "Your wishlist is empty",
+    "emptyDescription": "Search for your first Pokémon to start your collection.",
+    "limit": "The wishlist is limited to 6 Pokémon.",
+    "apiError": "Unable to contact the Hono API."
+  },
+  "pokemon": {
+    "number": "No. {number}",
+    "add": "Add to wishlist",
+    "remove": "Remove from wishlist",
+    "saving": "Syncing…",
+    "types": "Types"
+  },
+  "detail": {
+    "back": "Back to the wishlist",
+    "titleSuffix": "Pokédex",
+    "description": "Detailed sheet for {name}."
+  }
 }

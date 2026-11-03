@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
+    "ci": "npm run lint && npm run check:locales && npm run format:check && npm run typecheck && npm run typecheck:backend && npm run lint:backend && npm run format:check:backend && npm test && npm run test:backend && npm run build:backend && npm run test:e2e && npm run build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "lint": "eslint .",
@@ -12,7 +13,7 @@
     "format:check:backend": "prettier --check backend tests/backend.test.ts tsconfig.backend.json",
     "preview": "nuxt preview",
     "api": "tsx backend/index.ts",
-    "test": "vitest run",
+    "test": "vitest run tests/wishlist.test.ts tests/pokeapi.test.ts tests/backend.test.ts",
     "test:backend": "vitest run tests/backend.test.ts",
     "test:integration": "vitest run tests/integration/supabase.test.ts",
     "check:locales": "node scripts/check-locales.mjs",
@@ -21,10 +22,10 @@
     "build:backend": "tsc -p tsconfig.backend.json --outDir dist/backend",
     "lint:backend": "eslint backend tests/backend.test.ts",
     "typecheck:backend": "tsc --noEmit -p tsconfig.backend.json",
-    "typecheck": "nuxt typecheck",
-    "postinstall": "nuxt prepare"
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@hono/aws-lambda": "^1.0.1",
     "@hono/node-server": "^2.1.6",
     "@supabase/supabase-js": "^2.118.0",
     "dotenv": "^18.0.9",

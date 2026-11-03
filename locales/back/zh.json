@@ -1,4 +1,14 @@
 {
-  "errors": { "invalidJson": "JSON 无效", "invalidPokemon": "宝可梦无效", "duplicate": "宝可梦已存在", "full": "愿望清单最多只能有 6 只宝可梦", "notFound": "找不到宝可梦", "invalidId": "编号无效", "loadFailed": "无法加载愿望清单", "createFailed": "无法添加宝可梦", "deleteFailed": "无法删除宝可梦" },
+  "errors": {
+    "invalidJson": "JSON 无效",
+    "invalidPokemon": "宝可梦无效",
+    "duplicate": "宝可梦已存在",
+    "full": "愿望清单最多只能有 6 只宝可梦",
+    "notFound": "找不到宝可梦",
+    "invalidId": "编号无效",
+    "loadFailed": "无法加载愿望清单",
+    "createFailed": "无法添加宝可梦",
+    "deleteFailed": "无法删除宝可梦"
+  },
   "health": { "ok": "正常" }
 }

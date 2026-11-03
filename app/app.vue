@@ -51,8 +51,7 @@ const searchPokemon = async (): Promise<void> => {
   try {
     result.value = await fetchPokemon(query)
   } catch {
-    errorMessage.value =
-      t('search.notFound')
+    errorMessage.value = t('search.notFound')
   } finally {
     isLoading.value = false
   }
@@ -107,7 +106,11 @@ onMounted(async (): Promise<void> => {
     <div class="language-switcher">
       <label for="language-select">Langue</label>
       <select id="language-select" v-model="locale">
-        <option v-for="language in languages" :key="language.code" :value="language.code">
+        <option
+          v-for="language in languages"
+          :key="language.code"
+          :value="language.code"
+        >
           {{ language.label }}
         </option>
       </select>
@@ -118,9 +121,9 @@ onMounted(async (): Promise<void> => {
       <h1>{{ t('app.title') }}</h1>
       <p class="intro">{{ t('app.intro') }}</p>
       <form class="search-form" @submit.prevent="searchPokemon">
-        <label class="sr-only" for="pokemon-search"
-          >{{ t('search.label') }}</label
-        >
+        <label class="sr-only" for="pokemon-search">{{
+          t('search.label')
+        }}</label>
         <input
           id="pokemon-search"
           v-model="search"
@@ -143,7 +146,9 @@ onMounted(async (): Promise<void> => {
       </div>
       <div class="result-content">
         <p class="pokemon-number">
-          {{ t('pokemon.number', { number: String(result.id).padStart(3, '0') }) }}
+          {{
+            t('pokemon.number', { number: String(result.id).padStart(3, '0') })
+          }}
         </p>
         <h2>{{ formatName(result.name) }}</h2>
         <div class="types">
@@ -171,7 +176,9 @@ onMounted(async (): Promise<void> => {
       <div class="section-heading">
         <div>
           <p class="eyebrow">{{ t('wishlist.eyebrow') }}</p>
-          <h2>{{ t('wishlist.title') }} <span>({{ wishlist.length }})</span></h2>
+          <h2>
+            {{ t('wishlist.title') }} <span>({{ wishlist.length }})</span>
+          </h2>
         </div>
         <p v-if="wishlist.length" class="saved-label">
           {{ t('wishlist.synced') }}
@@ -186,7 +193,9 @@ onMounted(async (): Promise<void> => {
           <button
             class="remove-button"
             type="button"
-            :aria-label="t('wishlist.remove', { name: formatName(pokemon.name) })"
+            :aria-label="
+              t('wishlist.remove', { name: formatName(pokemon.name) })
+            "
             @click="removeFromWishlist(pokemon)"
           >
             ×
@@ -208,7 +217,7 @@ onMounted(async (): Promise<void> => {
       </div>
       <div v-else class="empty-state">
         <div class="empty-icon">☆</div>
-          <h3>{{ t('wishlist.emptyTitle') }}</h3>
+        <h3>{{ t('wishlist.emptyTitle') }}</h3>
         <p>{{ t('wishlist.emptyDescription') }}</p>
       </div>
     </section>

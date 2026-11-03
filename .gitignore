@@ -4,6 +4,7 @@
 .nuxt
 .nitro
 .cache
+.aws-sam
 dist
 coverage
 .nyc_output
@@ -28,5 +29,6 @@ Thumbs.db
 .env.*
 *.local
 docker-compose.override.yml
+samconfig.toml
 !.env.example
 !.env.test.example

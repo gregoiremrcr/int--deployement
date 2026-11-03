@@ -82,16 +82,63 @@ const createSupabaseRepository = (): WishlistRepository => {
   }
 }
 
+const createMemoryRepository = (): WishlistRepository => {
+  const items: WishlistItem[] = []
+
+  return {
+    list: async () => items,
+    insert: async (item) => {
+      if (items.some((savedItem) => savedItem.id === item.id)) {
+        const error = new Error('duplicate') as RepositoryError
+        error.code = '23505'
+        throw error
+      }
+
+      if (items.length >= 6) {
+        const error = new Error('wishlist full') as RepositoryError
+        error.code = '23514'
+        throw error
+      }
+
+      const savedItem = {
+        ...item,
+        addedAt: item.addedAt ?? new Date().toISOString(),
+      }
+      items.push(savedItem)
+      return savedItem
+    },
+    remove: async (id) => {
+      const index = items.findIndex((item) => item.id === id)
+      if (index === -1) return false
+      items.splice(index, 1)
+      return true
+    },
+  }
+}
+
+const createDefaultRepository = (): WishlistRepository => {
+  const hasSupabaseConfiguration =
+    Boolean(process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+    Boolean(
+      process.env.SUPABASE_ANON_KEY ??
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    )
+
+  return hasSupabaseConfiguration
+    ? createSupabaseRepository()
+    : createMemoryRepository()
+}
+
 export const createWishlistApp = (repository?: WishlistRepository): Hono => {
   let activeRepository = repository
   const getRepository = (): WishlistRepository => {
-    activeRepository ??= createSupabaseRepository()
+    activeRepository ??= createDefaultRepository()
     return activeRepository
   }
 
   const app = new Hono()
 
-  app.use('*', cors({ origin: '*' }))
+  app.use('*', cors({ origin: process.env.ALLOWED_ORIGIN ?? '*' }))
 
   app.get('/health', (context) => context.json({ status: 'ok' }))
 

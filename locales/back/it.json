@@ -1,4 +1,14 @@
 {
-  "errors": { "invalidJson": "JSON non valido", "invalidPokemon": "Pokémon non valido", "duplicate": "Pokémon già presente", "full": "La wishlist è limitata a 6 Pokémon", "notFound": "Pokémon non trovato", "invalidId": "Identificativo non valido", "loadFailed": "Impossibile caricare la wishlist", "createFailed": "Impossibile aggiungere il Pokémon", "deleteFailed": "Impossibile eliminare il Pokémon" },
+  "errors": {
+    "invalidJson": "JSON non valido",
+    "invalidPokemon": "Pokémon non valido",
+    "duplicate": "Pokémon già presente",
+    "full": "La wishlist è limitata a 6 Pokémon",
+    "notFound": "Pokémon non trovato",
+    "invalidId": "Identificativo non valido",
+    "loadFailed": "Impossibile caricare la wishlist",
+    "createFailed": "Impossibile aggiungere il Pokémon",
+    "deleteFailed": "Impossibile eliminare il Pokémon"
+  },
   "health": { "ok": "ok" }
 }

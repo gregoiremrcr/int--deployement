@@ -1,0 +1,9 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "pokemon-wishlist-api"
+resolve_s3 = true
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+region = "eu-west-3"
+parameter_overrides = "SupabaseUrl=REPLACE_ME SupabasePublishableKey=REPLACE_ME AllowedOrigin=*"
