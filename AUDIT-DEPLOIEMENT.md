@@ -16,18 +16,18 @@ En l’état, le frontend pointe par défaut vers `http://localhost:8787`. Il ne
 
 ## État vérifié
 
-| Élément | État | Commentaire |
-|---|---|---|
-| Typecheck backend | OK | `npm.cmd run typecheck:backend` passe |
-| Tests backend | OK | 4 tests passent |
-| Build backend | OK | `npm.cmd run build:backend` passe |
-| Lint / locales / format | OK | Le lint ne remonte que 4 warnings Vue |
-| Build/typecheck Nuxt | À corriger | Échec lors de l’appel réseau à PokeAPI dans `nuxt.config.ts` |
-| CI GitHub | Partiel | Vérifie et build, mais ne déploie que le frontend Vercel |
-| Déploiement API AWS | Manquant | Aucun workflow, script npm ou procédure automatisée |
-| AWS SAM CLI | Manquant localement | La commande `sam` n’est pas installée sur la machine auditée |
-| Base Supabase | OK | Les migrations `000_schema_migrations.sql` et `001_likes.sql` ont été appliquées avec succès sur la base cible |
-| Docker | Présent | À valider avec un build et un démarrage en environnement de déploiement |
+| Élément                 | État                | Commentaire                                                                                                    |
+| ----------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Typecheck backend       | OK                  | `npm.cmd run typecheck:backend` passe                                                                          |
+| Tests backend           | OK                  | 4 tests passent                                                                                                |
+| Build backend           | OK                  | `npm.cmd run build:backend` passe                                                                              |
+| Lint / locales / format | OK                  | Le lint ne remonte que 4 warnings Vue                                                                          |
+| Build/typecheck Nuxt    | À corriger          | Échec lors de l’appel réseau à PokeAPI dans `nuxt.config.ts`                                                   |
+| CI GitHub               | Partiel             | Vérifie et build, mais ne déploie que le frontend Vercel                                                       |
+| Déploiement API AWS     | Manquant            | Aucun workflow, script npm ou procédure automatisée                                                            |
+| AWS SAM CLI             | Manquant localement | La commande `sam` n’est pas installée sur la machine auditée                                                   |
+| Base Supabase           | OK                  | Les migrations `000_schema_migrations.sql` et `001_likes.sql` ont été appliquées avec succès sur la base cible |
+| Docker                  | Présent             | À valider avec un build et un démarrage en environnement de déploiement                                        |
 
 ## Bloquants à traiter
 
@@ -166,7 +166,7 @@ Pour une chaîne complète, ajouter un job AWS après les validations, avec des 
 
 ## Commandes de validation utiles
 
-```bash
+````bash
 npm ci
 npm run ci
 npm run api
@@ -182,7 +182,7 @@ La connexion PostgreSQL de migration a ete validee avec :
 
 ```bash
 npm run db:migrate
-```
+````
 
 Resultat confirme :
 
@@ -191,6 +191,61 @@ Resultat confirme :
 - la table `public.schema_migrations` est suivie par le runner.
 
 Le script `scripts/migrate.mjs` charge automatiquement `.env` via `dotenv/config`. La variable `DATABASE_URL` reste reservee aux migrations et ne doit pas etre exposee au frontend ni commitee dans Git.
+
 ```
 
 Sur Windows, si PowerShell bloque `npm.ps1`, utiliser `npm.cmd` ou ajuster la policy d’exécution de la machine.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Voici comment faire.
+1. Trouver l’URL de l’API AWS
+Après le déploiement SAM, récupère l’output WishlistApiUrl :
+sam deploy
+ou directement avec AWS CLI :
+aws cloudformation describe-stacks `
+  --stack-name NOM_DE_TA_STACK `
+  --query "Stacks[0].Outputs[?OutputKey=='WishlistApiUrl'].OutputValue" `
+  --output text
+Tu obtiendras une URL similaire à :
+https://abc123xyz.execute-api.eu-west-3.amazonaws.com
+Ne rajoute pas /health dans la variable : garde uniquement l’URL de base.
+2. Ajouter la variable dans Vercel
+Dans Vercel :
+1. Ouvre ton projet.
+2. Va dans Settings → Environment Variables.
+3. Clique sur Add New.
+4. Renseigne :
+Name:  NUXT_PUBLIC_API_BASE_URL
+Value: https://abc123xyz.execute-api.eu-west-3.amazonaws.com
+5. Sélectionne uniquement Production.
+6. Clique sur Save.
+L’URL doit être celle d’API Gateway, pas :
+http://localhost:8787
+3. Redéployer
+Comme cette variable est utilisée pendant le build Nuxt :
+1. Va dans l’onglet Deployments.
+2. Ouvre le dernier déploiement.
+3. Clique sur les trois points.
+4. Sélectionne Redeploy.
+5. Vérifie que l’environnement choisi est Production.
+Le pipeline GitHub déploiera ensuite automatiquement sur main, à condition que les secrets suivants soient déjà configurés dans GitHub :
+VERCEL_TOKEN
+VERCEL_ORG_ID
+VERCEL_PROJECT_ID
+Tu peux tester l’API avec :
+https://abc123xyz.execute-api.eu-west-3.amazonaws.com/health
+Dans ton projet, l’URL AWS est générée par la sortie WishlistApiUrl de [template.yaml (line 75)](C:/iim/m1 iwid/inté%2Bdeployement/template.yaml:75).
+```
