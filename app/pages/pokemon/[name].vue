@@ -28,9 +28,21 @@ if (error.value || !pokemon.value) {
 }
 
 const pokemonData = pokemon.value
+const likeStorageKey = computed(() => `pokemon-like-${pokemonData.id}`)
+const isLiked = ref(false)
+const likeCount = computed(() => (isLiked.value ? 1 : 0))
 
 const formatName = (value: string): string =>
   value.charAt(0).toUpperCase() + value.slice(1)
+
+const toggleLike = (): void => {
+  isLiked.value = !isLiked.value
+  localStorage.setItem(likeStorageKey.value, String(isLiked.value))
+}
+
+onMounted(() => {
+  isLiked.value = localStorage.getItem(likeStorageKey.value) === 'true'
+})
 
 useHead(() => ({
   title: `${formatName(pokemonData.name)} | ${t('detail.titleSuffix')}`,
@@ -84,6 +96,17 @@ useHead(() => ({
             {{ type }}
           </span>
         </div>
+        <button
+          class="like-button"
+          type="button"
+          :aria-label="isLiked ? t('pokemon.unlike') : t('pokemon.like')"
+          :aria-pressed="isLiked"
+          @click="toggleLike"
+        >
+          <span aria-hidden="true">{{ isLiked ? '♥' : '♡' }}</span>
+          {{ isLiked ? t('pokemon.unlike') : t('pokemon.like') }}
+          <span data-testid="pokemon-like-count">{{ likeCount }}</span>
+        </button>
       </div>
     </article>
   </main>
@@ -192,6 +215,32 @@ h1 {
   font-size: 0.8rem;
   font-weight: 700;
   text-transform: capitalize;
+}
+
+.like-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+  padding: 11px 16px;
+  border: 1px solid #e5e8f2;
+  border-radius: 12px;
+  color: #5969da;
+  background: white;
+  font-weight: 700;
+  transition: 0.2s ease;
+}
+
+.like-button:hover {
+  border-color: #6877e8;
+  background: #f7f8ff;
+  transform: translateY(-1px);
+}
+
+.like-button[aria-pressed='true'] {
+  border-color: #e8a0b0;
+  color: #c8495f;
+  background: #fff3f5;
 }
 
 @media (max-width: 620px) {

@@ -76,9 +76,9 @@ test('opens a Pokémon detail sheet', async ({ page }) => {
   await expect(page.locator('.back-link')).toBeVisible()
 })
 
-test.fixme('likes a Pokémon and persists the like', async ({ page }) => {
-  // À activer lorsque les endpoints /likes et le bouton de like seront branchés.
+test('likes a Pokémon and persists the like locally', async ({ page }) => {
   await page.goto('/pokemon/pikachu')
+  await page.locator('#language-select').selectOption('en')
   await page.getByRole('button', { name: /like/i }).click()
   await expect(page.getByTestId('pokemon-like-count')).toHaveText('1')
   await page.reload()

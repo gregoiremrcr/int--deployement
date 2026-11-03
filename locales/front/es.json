@@ -27,6 +27,8 @@
     "add": "Añadir a la lista",
     "remove": "Quitar de la lista",
     "saving": "Sincronizando…",
+    "like": "Me gusta",
+    "unlike": "Ya no me gusta",
     "types": "Tipos"
   },
   "detail": {

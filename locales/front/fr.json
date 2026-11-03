@@ -27,6 +27,8 @@
     "add": "Ajouter à la wishlist",
     "remove": "Retirer de la wishlist",
     "saving": "Synchronisation…",
+    "like": "J’aime",
+    "unlike": "Je n’aime plus",
     "types": "Types"
   },
   "detail": {

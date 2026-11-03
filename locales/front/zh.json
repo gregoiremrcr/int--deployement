@@ -27,6 +27,8 @@
     "add": "加入愿望清单",
     "remove": "从愿望清单移除",
     "saving": "同步中…",
+    "like": "喜欢",
+    "unlike": "取消喜欢",
     "types": "属性"
   },
   "detail": {

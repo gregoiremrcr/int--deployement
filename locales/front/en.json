@@ -27,6 +27,8 @@
     "add": "Add to wishlist",
     "remove": "Remove from wishlist",
     "saving": "Syncing…",
+    "like": "Like",
+    "unlike": "Unlike",
     "types": "Types"
   },
   "detail": {
