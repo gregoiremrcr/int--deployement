@@ -26,7 +26,7 @@ npm run build
 npm run ci
 ```
 
-Les tests d’intégration ne s’exécutent que si `SUPABASE_TEST_URL` et `SUPABASE_TEST_PUBLISHABLE_KEY` sont définies. Utiliser exclusivement un projet Supabase de test. Les tests E2E utilisent le stockage mémoire (`WISHLIST_STORAGE=memory`) et ne modifient pas Supabase.
+Les tests d’intégration locaux ne s’exécutent que si `SUPABASE_TEST_URL` et `SUPABASE_TEST_PUBLISHABLE_KEY` sont définies. Dans GitHub, le workflow lit les secrets `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` de l’environnement `integration-tests`, puis les transmet aux tests sous ces noms internes. Utiliser exclusivement un projet Supabase de test. Les tests E2E utilisent le stockage mémoire (`WISHLIST_STORAGE=memory`) et ne modifient pas Supabase.
 
 Le rapport de couverture Vitest est écrit dans `coverage/`. La CI le publie comme artefact GitHub et ajoute les pourcentages au résumé du workflow. Le badge Codecov est facultatif: activer `CODECOV_ENABLED=true` et définir `CODECOV_TOKEN` après avoir créé le projet Codecov.
 
@@ -42,7 +42,7 @@ Le rapport de couverture Vitest est écrit dans `coverage/`. La CI le publie com
 | Frontend en production          | `NUXT_PUBLIC_API_BASE_URL`                                                    | Variable Production des paramètres du projet Vercel; le workflow la transmet aussi depuis la sortie SAM                       |
 | AWS                             | `AWS_ROLE_ARN`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `DATABASE_URL`    | Secrets de l’environnement GitHub `production`; rôle AWS fédéré par OIDC et connexion Postgres uniquement pour les migrations |
 | Configuration AWS non secrète   | `AWS_REGION`, `AWS_SAM_STACK_NAME`, `ALLOWED_ORIGIN`, `VERCEL_PRODUCTION_URL` | Variables de l’environnement GitHub `production`                                                                              |
-| Tests Supabase                  | `SUPABASE_TEST_URL`, `SUPABASE_TEST_PUBLISHABLE_KEY`                          | Secrets de l’environnement GitHub `integration-tests` ou variables du processus local; jamais les identifiants de production  |
+| Tests Supabase                  | Secrets GitHub `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; variables locales `SUPABASE_TEST_URL`, `SUPABASE_TEST_PUBLISHABLE_KEY` | Projet de test dédié dans l’environnement GitHub `integration-tests`; le workflow les transmet sous les noms `SUPABASE_TEST_*` aux tests |
 | Badge de couverture (optionnel) | `CODECOV_TOKEN`, `CODECOV_ENABLED=true`                                       | Secret et variable GitHub Actions; activer après création du projet Codecov                                                   |
 
 Créer l’environnement GitHub `production` et autoriser le rôle AWS à faire confiance au fournisseur OIDC GitHub pour ce dépôt et la branche `main`. Le domaine Vercel et `ALLOWED_ORIGIN` doivent être des origines HTTPS sans chemin ni slash final. Le workflow n’utilise aucun secret pour les pull requests.

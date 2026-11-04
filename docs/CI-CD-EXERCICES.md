@@ -32,7 +32,7 @@ Dans les secrets GitHub `production`, définir `AWS_ROLE_ARN`, `SUPABASE_URL`, `
 
 ### Tests d’intégration
 
-Créer un projet Supabase distinct, appliquer `supabase/init.sql` et les migrations, puis définir `SUPABASE_TEST_URL` et `SUPABASE_TEST_PUBLISHABLE_KEY` comme secrets de l’environnement GitHub `integration-tests`. Le job ne tourne que sur un push vers `main`; les PR ne reçoivent aucun secret et ne dépendent pas du projet de test. Les fixtures utilisent les IDs `900001`, `900002` et `900010` à `900016`; seuls ces IDs sont nettoyés. Ne pas réutiliser les identifiants de production.
+Créer un projet Supabase distinct, appliquer `supabase/init.sql` et les migrations, puis définir `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` comme secrets de l’environnement GitHub `integration-tests`. Le workflow les transmet aux tests sous les noms internes `SUPABASE_TEST_URL` et `SUPABASE_TEST_PUBLISHABLE_KEY`. Le job ne tourne que sur un push vers `main`; les PR ne reçoivent aucun secret et ne dépendent pas du projet de test. Les fixtures utilisent les IDs `900001`, `900002` et `900010` à `900016`; seuls ces IDs sont nettoyés. Ne pas réutiliser les identifiants de production.
 
 ## Commandes de vérification
 

@@ -125,8 +125,8 @@ jobs:
       - name: Run Supabase integration tests
         run: npm run test:integration
         env:
-          SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
-          SUPABASE_TEST_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_TEST_PUBLISHABLE_KEY }}
+          SUPABASE_TEST_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_TEST_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
 
   deploy-api:
     name: Deploy API to AWS Lambda
