@@ -257,6 +257,8 @@ jobs:
 
       - name: Build Vercel application
         run: vercel build --prod --token="$VERCEL_TOKEN"
+        env:
+          NITRO_PRESET: vercel
 
       - name: Deploy Vercel application
         run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"

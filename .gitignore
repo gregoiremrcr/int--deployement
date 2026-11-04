@@ -37,3 +37,5 @@ samconfig.toml
 #m d
 pour_aws.md
 AUDIT-DEPLOIEMENT.md
+.vercel
+.env*
