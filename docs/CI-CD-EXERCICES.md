@@ -49,9 +49,11 @@ npm run test:coverage
 npm run build:backend
 npm run test:e2e
 npm run build
-sam validate --template-file template.yaml
-sam build --template-file template.yaml
+sam validate --template-file template.yaml --region eu-west-3
+sam build --template-file template.yaml --region eu-west-3
 ```
+
+`sam validate` s’exécute dans le job de déploiement après l’authentification AWS par OIDC. Le job de validation des pull requests n’utilise pas de secrets AWS; il exécute `sam build` avec la région explicite.
 
 Pour un smoke test API non destructif, `API_BASE_URL` doit être l’URL racine API Gateway. Pour le test complet, fournir aussi `FRONTEND_BASE_URL`. Le script n’effectue que des GET.
 
